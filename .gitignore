@@ -132,4 +132,5 @@ settings.py
 
 .DS_Store
 
-.idea/
+.idea
+setup

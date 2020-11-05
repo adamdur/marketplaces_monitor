@@ -11,14 +11,6 @@ client = Bot('Hello world!')
 client.remove_command('help')
 token = settings.BOT_USER_TOKEN
 
-db = mysql.connect(
-    host=settings.DB_HOST,
-    port=settings.DB_PORT,
-    database=settings.DB_DATABASE,
-    user=settings.DB_USER,
-    password=settings.DB_PW
-)
-
 
 def main():
     print("Starting up...")
@@ -84,6 +76,7 @@ def insert_log(message, price_object):
                 1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0
             )
             print('---> SAVING DATA TO DB')
+            db = db_helper.mysql_get_mydb()
             db_helper.insert_post(db, data)
 
 
