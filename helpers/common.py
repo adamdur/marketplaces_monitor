@@ -102,7 +102,7 @@ def get_channel_types(channel_name, message_content):
             types.append('wtr')
         if 'wtro' in message_content.lower():
             types.append('wtro')
-        if not any(c in channel_name for c in ['wtr ', 'wtro']):
+        if not any(c in message_content.lower() for c in ['wtr ', 'wtro']):
             types.append('wtro')
     if not types:
         if any(w in channel_name for w in ['wts', 'sell']):
@@ -112,7 +112,7 @@ def get_channel_types(channel_name, message_content):
                 types.append('wtt')
             if 'wtb' in message_content.lower():
                 types.append('wtb')
-            if not any(n in channel_name for n in ['wtt', 'wtb']):
+            if not any(n in message_content.lower() for n in ['wtt', 'wtb']):
                 types.append('wtb')
         if not types:
             return False

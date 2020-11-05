@@ -61,7 +61,7 @@ def insert_log(message, price_object):
     if price_object and price_object['level'] == 1:
         db_price = common_helper.get_db_price(price_object['price'])
         db_type = common_helper.get_channel_types(message.channel.name, message.content)
-        if not db_price:
+        if not db_price or not db_type:
             return
         if not len(db_type) == 1:
             return
