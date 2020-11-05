@@ -38,10 +38,6 @@ def get_formatted_price(message):
 
 
 def format_decimal_price(price, delimeter):
-    print('delimeter')
-    print(delimeter)
-    print('price')
-    print(price)
     partials = price.split(delimeter)
     if len(partials) == 1:
         price += "000"
@@ -52,9 +48,6 @@ def format_decimal_price(price, delimeter):
         elif num_length == 2:
             price += "0"
     final = price.replace(delimeter, '')
-    print(final)
-    print('updated numeric value')
-    print(final)
     return final
 
 

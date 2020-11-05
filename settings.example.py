@@ -14,8 +14,10 @@ COMMAND_PREFIX = "?"
 BOT_TOKEN = "<BOT_TOKEN>"
 BOT_USER_TOKEN = "<BOT_USER_TOKEN>"
 
+DISCORD_URL = "https://discord.com"
 BOT_NAME = "MARKETPLACES MONITOR BY SMYB"
 BOT_URL = "https://discord.gg/hmmRweZh"
+BOT_ICON = "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTobiQybVGDOr_cpv9OaKlUOfq_PEEJy5J5fw&usqp=CAU"
 
 # The now playing game. Set this to anything false-y ("", None) to disable it
 NOW_PLAYING = "with Bot Markets"
