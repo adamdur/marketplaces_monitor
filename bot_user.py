@@ -1,9 +1,11 @@
+import getopt
+import sys
+from datetime import datetime
+
 import discord
 from discord.ext.commands import Bot
-import mysql.connector as mysql
-import settings
-from datetime import date, datetime
 
+import settings
 from helpers import common as common_helper
 from helpers import db as db_helper
 
@@ -12,9 +14,24 @@ client.remove_command('help')
 token = settings.BOT_USER_TOKEN
 
 
-def main():
+def main(argv):
     print("Starting up...")
     print("Everything set up... Watching for messages...")
+    print("[DATA TO DATABASE] = ON")
+
+    send_messages = 1
+    try:
+        opts, args = getopt.getopt(argv, "m:", ["message"])
+    except getopt.GetoptError:
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-m':
+            send_messages = arg
+
+    if send_messages == 1:
+        print("[DATA TO DISCORD] = ON")
+    else:
+        print("[DATA TO DISCORD] = OFF")
 
     @client.event
     async def on_message(message):
@@ -27,8 +44,9 @@ def main():
             embed = build_embed(message, price_obj)
             watcher_channel = client.get_channel(settings.DEFAULT_WATCHER_CHANNEL)
 
-            print('-> SENDING MESSAGE')
-            await watcher_channel.send(embed=embed)
+            if send_messages == 1:
+                print('-> [SENDING MESSAGE] {} [#{}]'.format(message.guild.name, channel_name))
+                await watcher_channel.send(embed=embed)
             insert_log(message, price_obj)
 
     client.run(token, bot=False)
@@ -66,19 +84,23 @@ def insert_log(message, price_object):
         if not len(db_type) == 1:
             return
         if db_type[0] == 'wts' or db_type[0] == 'wtb':
-            data = (
-                common_helper.get_bot_from_channel(message.channel.name),
-                db_type[0],
-                db_price,
-                message.guild.name,
-                datetime.now(),
-                message.content,
-                1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0
-            )
-            print('---> SAVING DATA TO DB')
-            db = db_helper.mysql_get_mydb()
-            db_helper.insert_post(db, data)
+            data = False
+            if (db_type[0] == 'wts' and 'wts' in message.content.lower())\
+                    or (db_type[0] == 'wtb' and 'wtb' in message.content.lower()):
+                data = (
+                    common_helper.get_bot_from_channel(message.channel.name),
+                    db_type[0],
+                    db_price,
+                    message.guild.name,
+                    datetime.now(),
+                    message.content,
+                    1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0
+                )
+            if data:
+                print('---> SAVING DATA TO DB')
+                db = db_helper.mysql_get_mydb()
+                db_helper.insert_post(db, data)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

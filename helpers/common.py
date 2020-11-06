@@ -7,8 +7,8 @@ from currency_converter import CurrencyConverter
 
 
 def get_formatted_price(message):
-    regexp1 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:[/]?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|eur|euro|EURO)(?:[/]?)'
-    regexp2 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)\s?(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|eur|euro|EURO)'
+    regexp1 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:[/]?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)(?:[/]?)'
+    regexp2 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)\s?(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)'
 
     first_try = re.finditer(regexp1, message.content)
     match = ''
@@ -65,7 +65,7 @@ def get_db_price(price):
         final_value = format_decimal_price(numeric_value, '.')
     elif ',' in numeric_value:
         final_value = format_decimal_price(numeric_value, ',')
-    elif 'k' in price:
+    elif 'k' in price.lower():
         final_value = numeric_value + "000"
     else:
         final_value = numeric_value.replace(' ', '')
@@ -82,6 +82,9 @@ def get_db_price(price):
         final_value = converter.convert(float(final_value), 'EUR', 'USD')
     if any(c in matched_currency.lower() for c in ['£', 'gbp', 'euro']):
         final_value = converter.convert(float(final_value), 'GBP', 'USD')
+
+    if float(final_value) > settings.PRICE_CAP:
+        return False
 
     return math.ceil(float(final_value))
 
@@ -115,7 +118,7 @@ def get_channel_types(channel_name, message_content):
             if not any(n in message_content.lower() for n in ['wtt', 'wtb']):
                 types.append('wtb')
         if not types:
-            return False
+            return []
 
     return types
 

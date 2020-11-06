@@ -2,6 +2,7 @@ import settings
 import discord
 
 from helpers import roles as roles_helper
+from helpers import setup_data as setup_data_helper
 
 
 def get_channel(channels, channel_name):
@@ -40,7 +41,13 @@ def get_hidden_permissions(guild):
 
 
 async def get_default_setup_channel(guild, category):
-    channel = get_channel(guild.channels, settings.DEFAULT_SETUP_CHANNEL)
+    data = await setup_data_helper.get_data(guild)
+    setup = data.get('setup')
+    if setup.get('setup_channel'):
+        channel = get_channel_by_id(guild.channels, setup.get('setup_channel'))
+    else:
+        channel = get_channel(guild.channels, settings.DEFAULT_SETUP_CHANNEL)
+
     if not channel:
         overwrites = get_private_permissions(guild)
         return await guild.create_text_channel(settings.DEFAULT_SETUP_CHANNEL, category=category, overwrites=overwrites, position=0)

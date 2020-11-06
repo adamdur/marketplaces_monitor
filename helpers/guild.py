@@ -17,14 +17,16 @@ async def get_moderator_role(guild):
 async def base_guild_setup(guild):
     moderator_role = await get_moderator_role(guild)
     category = await channel_categories_helper.get_default_channel_category(guild)
+    await setup_data_helper.append_data(guild, 'setup', {'category': category.id})
     setup_channel = await channels_helper.get_default_setup_channel(guild, category)
+    await setup_data_helper.append_data(guild, 'setup', {'setup_channel': setup_channel.id})
     setup_data = await setup_data_helper.get_data(guild)
     return {
         str(guild.id): {
+            'guild': guild,
             'moderator_role': moderator_role,
             'category': category,
             'setup_channel': setup_channel,
-            'setup_data': setup_data,
-            'guild': guild
+            'setup_data': setup_data
         }
     }
