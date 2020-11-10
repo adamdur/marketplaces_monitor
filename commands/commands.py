@@ -1,3 +1,4 @@
+import settings
 from commands.base_command import BaseCommand
 
 
@@ -14,6 +15,10 @@ class Commands(BaseCommand):
 
         # Displays all descriptions, sorted alphabetically by command name
         for cmd in sorted(COMMAND_HANDLERS.items()):
-            msg += "\n" + cmd[1].description
+            if cmd[1].name.lower() in settings.ADMIN_COMMANDS:
+                if [role for role in message.author.roles if role.name.lower() in settings.ALLOWED_ROLES]:
+                    msg += "\n" + cmd[1].description
+            else:
+                msg += "\n" + cmd[1].description
 
         await message.channel.send(msg)

@@ -7,25 +7,26 @@ from currency_converter import CurrencyConverter
 
 
 def get_formatted_price(message):
-    regexp1 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:[/]?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)(?:[/]?)'
+    regexp1 = '(usd|eur|gbp|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:( /|/|m| m|ren| ren)?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(usd|eur|gbp|k usd|k eur|k gbp|kusd|keur|kgbp|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k)(?:[/]?)(?:( /|/|m| m|ren| ren)?)'
     regexp2 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)\s?(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)'
 
-    first_try = re.finditer(regexp1, message.content)
+    message_content = message.content.lower()
+    first_try = re.finditer(regexp1, message_content)
     match = ''
     level = 0
     if first_try:
         for ftry in first_try:
-            if '/' not in ftry.group():
+            if not any(s in ftry.group() for s in [' /', '/', 'm', ' m', 'ren', ' ren']):
                 match = ftry.group()
                 level = 1
                 break
     if not match:
-        second_try = re.search(regexp2, message.content)
+        second_try = re.search(regexp2, message_content)
         if second_try:
             match = second_try.group(0)
             level = 2
         if not second_try:
-            third_try = Price.fromstring(message.content)
+            third_try = Price.fromstring(message_content)
             if third_try:
                 if third_try.amount and third_try.amount > 9:
                     if third_try.amount > 99999:

@@ -49,14 +49,22 @@ def main():
     async def on_guild_join(guild):
         this.setup_data.append(await guild_helper.base_guild_setup(guild))
 
+    @client.event
+    async def on_guild_remove(guild):
+        await guild_helper.destroy_guild(guild)
+        for index, data in enumerate(this.setup_data):
+            guild_id = list(data)[0]
+            if guild_id == str(guild.id):
+                del this.setup_data[index]
+
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
         if text.startswith(settings.COMMAND_PREFIX) and text != settings.COMMAND_PREFIX:
-            if not [role for role in message.author.roles if role.name.lower() in settings.ALLOWED_ROLES]:
-                return await message.channel.send(':no_entry: ' + message.author.mention + ' You are not allowed to use this command! :no_entry:')
-
             cmd_split = text[len(settings.COMMAND_PREFIX):].split()
+            if cmd_split[0].lower() in settings.ADMIN_COMMANDS:
+                if not [role for role in message.author.roles if role.name.lower() in settings.ALLOWED_ROLES]:
+                    return await message.channel.send(':no_entry: ' + message.author.mention + ' You are not allowed to use this command! :no_entry:')
             try:
                 await message_handler.handle_command(cmd_split[0].lower(), cmd_split[1:], message, client)
             except:

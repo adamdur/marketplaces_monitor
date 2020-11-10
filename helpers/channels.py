@@ -20,6 +20,13 @@ def get_public_permissions(guild):
     }
 
 
+def get_public_permissions_with_messages(guild):
+    return {
+        guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True, add_reactions=True, attach_files=False, embed_links=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, add_reactions=True),
+    }
+
+
 def get_private_permissions(guild):
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -40,7 +47,7 @@ def get_hidden_permissions(guild):
     }
 
 
-async def get_default_setup_channel(guild, category):
+async def get_default_setup_channel(guild, category, create=True):
     data = await setup_data_helper.get_data(guild)
     setup = data.get('setup')
     if setup.get('setup_channel'):
@@ -48,9 +55,24 @@ async def get_default_setup_channel(guild, category):
     else:
         channel = get_channel(guild.channels, settings.DEFAULT_SETUP_CHANNEL)
 
-    if not channel:
+    if not channel and create:
         overwrites = get_private_permissions(guild)
         return await guild.create_text_channel(settings.DEFAULT_SETUP_CHANNEL, category=category, overwrites=overwrites, position=0)
+
+    return channel
+
+
+async def get_default_commands_channel(guild, category, create=True):
+    data = await setup_data_helper.get_data(guild)
+    setup = data.get('setup')
+    if setup.get('commands_channel'):
+        channel = get_channel_by_id(guild.channels, setup.get('commands_channel'))
+    else:
+        channel = get_channel(guild.channels, settings.DEFAULT_COMMANDS_CHANNEL)
+
+    if not channel and create:
+        overwrites = get_public_permissions_with_messages(guild)
+        return await guild.create_text_channel(settings.DEFAULT_COMMANDS_CHANNEL, category=category, overwrites=overwrites, position=1)
 
     return channel
 
@@ -62,3 +84,17 @@ async def get_default_watcher_channel(guild, category):
         return await guild.create_text_channel(settings.DEFAULT_WATCHER_CHANNEL, category=category, overwrites=overwrites, position=0)
 
     return channel
+
+
+async def is_setup_channel(message):
+    setup_channel = await get_default_setup_channel(message.guild, message.channel.category, create=False)
+    if setup_channel and message.channel.id != setup_channel.id:
+        return False
+    return True
+
+
+async def is_commands_channel(message):
+    commands_channel = await get_default_commands_channel(message.guild, message.channel.category, create=False)
+    if commands_channel and message.channel.id != commands_channel.id:
+        return False
+    return True

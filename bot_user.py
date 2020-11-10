@@ -57,7 +57,7 @@ def build_embed(message, price_object):
     if price_object:
         price_string = price_object['price']
 
-    embed = discord.Embed(title="New post in #{}".format(message.channel.name), description="", color=333)
+    embed = discord.Embed(title="New post in #{}".format(message.channel.name), description="", color=settings.DEFAULT_EMBED_COLOR)
     embed.set_thumbnail(url=message.guild.icon_url)
     embed.add_field(name="Matched price:", value=price_string if price_string else 'N/A', inline=True)
     if message.author.mention:
@@ -94,7 +94,8 @@ def insert_log(message, price_object):
                     message.guild.name,
                     datetime.now(),
                     message.content,
-                    1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0
+                    1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
+                    "{}#{}".format(message.author.name, message.author.discriminator)
                 )
             if data:
                 print('---> SAVING DATA TO DB')

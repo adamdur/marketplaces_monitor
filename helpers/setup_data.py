@@ -51,3 +51,11 @@ async def save_data(guild, data):
     file = settings.SETUP_DIR + '/' + str(guild.id) + '.json'
     with open(file, mode='w') as f:
         f.write(json.dumps(data, indent=4))
+
+
+async def delete_guild_file(guild):
+    file = settings.SETUP_DIR + '/' + str(guild.id) + '.json'
+    if os.path.isfile(file):
+        os.remove(file)
+        return True
+    return False
