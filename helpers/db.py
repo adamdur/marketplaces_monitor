@@ -121,3 +121,43 @@ def get_activity_stats(db, renewal, type, days):
         'price_list': price_list,
         'count_list': count_list
     }
+
+
+def get_posts_stats(db, type, days):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT bot, COUNT(*) AS count FROM posts "
+             "WHERE bot != '0' "
+             "AND type = %s "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "GROUP BY bot "
+             "ORDER BY count DESC ")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=int(days))
+
+    cursor.execute(query, (type, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+
+    return data
+
+
+def get_price_stats(db, type, days):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT bot, AVG(price) AS price FROM posts "
+             "WHERE bot != '0' "
+             "AND type = %s "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "GROUP BY bot "
+             "ORDER BY price DESC ")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=int(days))
+
+    cursor.execute(query, (type, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+
+    return data

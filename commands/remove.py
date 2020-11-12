@@ -10,10 +10,10 @@ from helpers import setup_data as setup_data_helper
 class Remove(BaseCommand):
 
     def __init__(self):
-        description = "Remove monitor channel" \
-                      "```bot = name of bot // use command '{}available_bots' to see list of available bots\n" \
-                      "types = types of channels separated by comma. Use 'all' to delete all channels related to bot\n" \
-                      "use command '{}available_channel_types' to see list of available channel types```".format(settings.COMMAND_PREFIX, settings.COMMAND_PREFIX)
+        description = "Remove monitor channel"
+                      # "```bot = name of bot // use command '{}available_bots' to see list of available bots\n" \
+                      # "types = types of channels separated by comma. Use 'all' to delete all channels related to bot\n" \
+                      # "use command '{}available_channel_types' to see list of available channel types```".format(settings.COMMAND_PREFIX, settings.COMMAND_PREFIX)
         params = ['bot', 'types']
         super().__init__(description, params)
 

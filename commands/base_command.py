@@ -11,7 +11,7 @@ class BaseCommand:
         if self.params:
             desc += " " + " ".join(f"*<{p}>*" for p in params)
 
-        desc += f": {description}\n"
+        desc += f"\n> {description}\n"
         self.description = desc
 
     async def handle(self, params, message, client):

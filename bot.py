@@ -1,3 +1,4 @@
+import getopt
 import sys
 import settings
 import discord
@@ -13,8 +14,17 @@ this.running = False
 this.setup_data = []
 
 
-def main():
+def main(argv):
     print("Starting up...")
+    token = settings.BOT_TOKEN
+    try:
+        opts, args = getopt.getopt(argv, "t:", ["test_mode"])
+    except getopt.GetoptError:
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-t':
+            print('[USING TEST MODE]')
+            token = settings.BOT_TEST_TOKEN
     client = discord.Client()
 
     @client.event
@@ -127,11 +137,11 @@ def main():
     async def on_message_edit(before, after):
         await common_handle_message(after)
 
-    # Finally, set the bot running
-    client.run(settings.BOT_TOKEN)
+    client.run(token)
 
 ###############################################################################
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    main(sys.argv[1:])

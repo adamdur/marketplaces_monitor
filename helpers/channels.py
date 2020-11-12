@@ -57,7 +57,8 @@ async def get_default_setup_channel(guild, category, create=True):
 
     if not channel and create:
         overwrites = get_private_permissions(guild)
-        return await guild.create_text_channel(settings.DEFAULT_SETUP_CHANNEL, category=category, overwrites=overwrites, position=0)
+        channel = await guild.create_text_channel(settings.DEFAULT_SETUP_CHANNEL, category=category, overwrites=overwrites, position=0)
+        return await channel.send("Welcome! Start by using **{}help** command!".format(settings.COMMAND_PREFIX))
 
     return channel
 

@@ -10,10 +10,10 @@ from helpers import db as db_helper
 class Activity_stats(BaseCommand):
 
     def __init__(self):
-        description = "Shows activity and average price of selected bot, type and selected days" \
-                      "```renewal_type = [renewal, lt]\n" \
-                      "types = [{}]\n" \
-                      "days = number of days u want to get average price from (max is {})```".format(", ".join(settings.ACTIVITY_CHANNEL_TYPES), settings.MAX_DAYS_DATA_CAPTURE)
+        description = "Shows activity and average price stats for selected type and selected days"
+                      # "```renewal_type = [renewal, lt]\n" \
+                      # "types = [{}]\n" \
+                      # "days = number of days u want to get average price from (max is {})```".format(", ".join(settings.ACTIVITY_CHANNEL_TYPES), settings.MAX_DAYS_DATA_CAPTURE)
         params = ['renewal_type', 'type', 'days']
         super().__init__(description, params)
 

@@ -7,6 +7,14 @@ from helpers import channels as channels_helper
 from helpers import setup_data as setup_data_helper
 
 
+def get_guild(guilds, guild_name):
+    return discord.utils.get(guilds, name=guild_name)
+
+
+def get_guild_by_id(guilds, guild_id):
+    return discord.utils.get(guilds, id=guild_id)
+
+
 async def get_moderator_role(guild, create=True):
     data = await setup_data_helper.get_data(guild)
     setup = data.get('setup')
