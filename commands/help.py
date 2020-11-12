@@ -2,6 +2,8 @@ import settings
 import discord
 from commands.base_command import BaseCommand
 
+from helpers import channels as channels_helper
+
 
 class Help(BaseCommand):
 
@@ -11,6 +13,9 @@ class Help(BaseCommand):
         super().__init__(description, params)
 
     async def handle(self, params, message, client):
+        is_setup_channel = await channels_helper.is_setup_channel(message)
+        if not is_setup_channel:
+            return
         msg = "Hello " + message.author.mention + "!\n"
 
         msg += "Welcome to the MARKETPLACES MONITOR.\n\n" \
