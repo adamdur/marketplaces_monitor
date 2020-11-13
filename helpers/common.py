@@ -144,26 +144,25 @@ def build_status_message(bot, price, type, renewal):
     avg_price = int(avg_price)
     percentage = (post_price - avg_price) / avg_price * 100
     icon = ''
+    notify = False
     if percentage > 0:
         trend = 'above'
         if type == 'wts':
             icon = ':x:'
         elif type == 'wtb':
             icon = ':white_check_mark:'
+            if percentage > settings.NOTIFY_PERCENTAGE:
+                notify = True
     else:
         trend = 'under'
         if type == 'wts':
             icon = ':white_check_mark:'
+            if percentage < (settings.NOTIFY_PERCENTAGE * -1):
+                notify = True
         elif type == 'wtb':
             icon = ':x:'
 
-    notify = False
-    if type == 'wts' and post_price < (avg_price - (avg_price * settings.NOTIFY_PERCENTAGE)):
-        notify = True
-    if type == 'wtb' and post_price > (avg_price - (avg_price * settings.NOTIFY_PERCENTAGE)):
-        notify = True
-
     return {
         'notify': notify,
-        'message': '{} Price is {:.2f}% {} average price from last 24 hours'.format(icon, percentage, trend)
+        'message': '{} Price is {:.2f}% {} average price (${:.0f}) from last 24 hours'.format(icon, percentage, trend, avg_price)
     }
