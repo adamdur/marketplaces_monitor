@@ -91,8 +91,11 @@ def insert_log(message, price_object):
             data = False
             if (db_type[0] == 'wts' and 'wts' in message.content.lower())\
                     or (db_type[0] == 'wtb' and 'wtb' in message.content.lower()):
+                bot_name = common_helper.get_bot_from_channel(message.channel.name)
+                if bot_name in ['mek', 'mekpreme'] and 'aio' in message.content.lower():
+                    bot_name = 'mekaio'
                 data = (
-                    common_helper.get_bot_from_channel(message.channel.name),
+                    bot_name,
                     db_type[0],
                     db_price,
                     message.guild.name,
