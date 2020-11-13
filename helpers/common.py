@@ -177,11 +177,11 @@ def message_content_filter(message):
     message_content = message.content.lower()
     if 'f3' in message.channel.name.lower():
         if 'f3' in message_content:
-            message_content.replace("f3", "")
+            message_content = message_content.replace("f3", "")
     if 'polaris' in message.channel.name.lower():
         for match in ['80€', '€80', '100€', '€100']:
             if match in message_content:
-                message_content.replace(match, "")
+                message_content = message_content.replace(match, "")
                 break
 
     return message_content
