@@ -161,3 +161,23 @@ def get_price_stats(db, type, days):
     db.close()
 
     return data
+
+
+def get_average_price_by_bot(db, bot, type, renewal):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT AVG(price) AS price FROM posts "
+             "WHERE bot = %s "
+             "AND type = %s "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "LIMIT 1")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=1)
+
+    cursor.execute(query, (bot, type, renewal, last_day, now))
+    data = cursor.fetchone()
+    db.commit()
+    db.close()
+
+    return data['price']

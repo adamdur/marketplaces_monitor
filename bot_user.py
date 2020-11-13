@@ -54,8 +54,10 @@ def main(argv):
 
 def build_embed(message, price_object):
     price_string = ''
+    price_level = '0'
     if price_object:
         price_string = price_object['price']
+        price_level = price_object['level']
 
     embed = discord.Embed(title="New post in #{}".format(message.channel.name), description="", color=settings.DEFAULT_EMBED_COLOR)
     embed.set_thumbnail(url=message.guild.icon_url)
@@ -67,6 +69,8 @@ def build_embed(message, price_object):
     embed.add_field(name="Posted in:", value="<#{}>".format(message.channel.id), inline=True)
     embed.add_field(name="Message link:", value=":link: **[VIEW ORIGINAL MESSAGE]({}/channels/{}/{}/{})**".format(settings.DISCORD_URL, message.guild.id, message.channel.id, message.id), inline=False)
     embed.add_field(name="Message content:", value=">>> {}".format(message.content), inline=False)
+    embed.add_field(name="Price level:", value="{}".format(price_level), inline=False)
+    embed.add_field(name="Is lifetime:", value="1" if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else "0", inline=False)
     embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=True)
     embed.set_author(name=message.guild.name, icon_url=message.guild.icon_url)
 

@@ -4,6 +4,7 @@ import settings
 import math
 
 from currency_converter import CurrencyConverter
+from helpers import db as db_helper
 
 
 def get_formatted_price(message):
@@ -134,3 +135,35 @@ def get_bot_from_channel(channel_name):
     if not final_bot:
         return False
     return final_bot
+
+
+def build_status_message(bot, price, type, renewal):
+    post_price = get_db_price(price)
+    db = db_helper.mysql_get_mydb()
+    avg_price = db_helper.get_average_price_by_bot(db, bot, type, renewal)
+    avg_price = int(avg_price)
+    percentage = (post_price - avg_price) / avg_price * 100
+    icon = ''
+    if percentage > 0:
+        trend = 'above'
+        if type == 'wts':
+            icon = ':x:'
+        elif type == 'wtb':
+            icon = ':white_check_mark:'
+    else:
+        trend = 'under'
+        if type == 'wts':
+            icon = ':white_check_mark:'
+        elif type == 'wtb':
+            icon = ':x:'
+
+    notify = False
+    if type == 'wts' and post_price < (avg_price - (avg_price * settings.NOTIFY_PERCENTAGE)):
+        notify = True
+    if type == 'wtb' and post_price > (avg_price - (avg_price * settings.NOTIFY_PERCENTAGE)):
+        notify = True
+
+    return {
+        'notify': notify,
+        'message': '{} Price is {:.2f}% {} average price from last 24 hours'.format(icon, percentage, trend)
+    }

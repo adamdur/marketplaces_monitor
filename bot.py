@@ -40,7 +40,10 @@ def main(argv):
 
         # Set the Base guild setup for each guild bot is in
         for guild in client.guilds:
-            this.setup_data.append(await guild_helper.base_guild_setup(guild))
+            if int(guild.id) in settings.VERIFIED_GUILDS:
+                this.setup_data.append(await guild_helper.base_guild_setup(guild))
+            else:
+                await guild.leave()
 
         print("Everything set up... Watching marketplaces...")
 
@@ -57,7 +60,10 @@ def main(argv):
 
     @client.event
     async def on_guild_join(guild):
-        this.setup_data.append(await guild_helper.base_guild_setup(guild))
+        if int(guild.id) in settings.VERIFIED_GUILDS:
+            this.setup_data.append(await guild_helper.base_guild_setup(guild))
+        else:
+            await guild.leave()
 
     @client.event
     async def on_guild_remove(guild):
@@ -94,9 +100,24 @@ def main(argv):
             message_channel = embed_dict['title'].split("#")[1]
 
             message_content = ''
-            for field in embed_dict['fields']:
+            price_str = ''
+            price_level = ''
+            is_lifetime = ''
+            remove_indexes = []
+            for index, field in enumerate(embed_dict['fields']):
                 if field['name'] == 'Message content:':
                     message_content = field['value']
+                elif field['name'] == 'Matched price:':
+                    price_str = field['value']
+                elif field['name'] == 'Price level:':
+                    price_level = field['value']
+                    remove_indexes.append(index)
+                elif field['name'] == 'Is lifetime:':
+                    is_lifetime = field['value']
+                    remove_indexes.append(index)
+
+            for remove_index in sorted(remove_indexes, key=int, reverse=True):
+                embed.remove_field(remove_index)
 
             final_types = common_helper.get_channel_types(message_channel, message_content)
             if not final_types:
@@ -109,9 +130,16 @@ def main(argv):
                 return
 
             final_channels = []
+            notify = False
             if final_bot and final_types:
                 for type in final_types:
                     final_channels.append("{}-{}".format(final_bot, type))
+                    if price_level and price_str:
+                        if type in ['wts', 'wtb'] and int(price_level) == 1:
+                            message_data = common_helper.build_status_message(final_bot, price_str, type, is_lifetime)
+                            embed.insert_field_at(5, name="Status:", value=message_data['message'], inline=False)
+                            if message_data['notify'] is True:
+                                notify = True
 
             for data in this.setup_data:
                 guild_id = list(data)[0]
@@ -127,6 +155,8 @@ def main(argv):
 
                         print('---> GOING TO POST IN {}'.format(final_channel))
                         await channel_to_post.send(embed=embed)
+                        if notify and settings.NOTIFY:
+                            await channel_to_post.send(settings.NOTIFY_HANDLE)
 
     @client.event
     async def on_message(message):
