@@ -11,7 +11,7 @@ def get_formatted_price(message):
     regexp1 = '(usd|eur|gbp|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:( /|/|m| m|ren| ren)?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(usd|eur|gbp|k usd|k eur|k gbp|kusd|keur|kgbp|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k)(?:[/]?)(?:( /|/|m| m|ren| ren)?)'
     regexp2 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)\s?(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)'
 
-    message_content = message.content.lower()
+    message_content = message_content_filter(message)
     first_try = re.finditer(regexp1, message_content)
     match = ''
     level = 0
@@ -171,3 +171,17 @@ def build_status_message(bot, price, type, renewal):
         'notify': notify,
         'message': '{} Price is {:.2f}% {} average price (${:.0f}) from last 24 hours'.format(icon, percentage, trend, avg_price)
     }
+
+
+def message_content_filter(message):
+    message_content = message.content.lower()
+    if 'f3' in message.channel.name.lower():
+        if 'f3' in message_content:
+            message_content.replace("f3", "")
+    if 'polaris' in message.channel.name.lower():
+        for match in ['80€', '€80', '100€', '€100']:
+            if match in message_content:
+                message_content.replace(match, "")
+                break
+
+    return message_content

@@ -128,8 +128,9 @@ def main(argv):
             if not final_bot:
                 print('Bot not found: {}'.format(message_channel))
                 return
-            if final_bot in ['mek', 'mekpreme'] and 'aio' in message.content.lower():
-                final_bot = 'mekaio'
+            if final_bot in ['mek', 'mekpreme']:
+                if any(x in message.content.lower() for x in ['mekaio', 'aio']):
+                    final_bot = 'mekaio'
 
             final_channels = []
             notify = False
