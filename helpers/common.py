@@ -145,7 +145,10 @@ def build_status_message(bot, price, type, renewal):
     percentage = (post_price - avg_price) / avg_price * 100
     icon = ''
     notify = False
-    if percentage > 0:
+    if 5 >= percentage >= -5:
+        if type in ['wts', 'wtb']:
+            icon = ':ok:'
+    elif percentage > 5:
         trend = 'above'
         if type == 'wts':
             icon = ':x:'
@@ -153,7 +156,7 @@ def build_status_message(bot, price, type, renewal):
             icon = ':white_check_mark:'
             if percentage > settings.NOTIFY_PERCENTAGE:
                 notify = True
-    else:
+    elif percentage < -5:
         trend = 'under'
         if type == 'wts':
             icon = ':white_check_mark:'
