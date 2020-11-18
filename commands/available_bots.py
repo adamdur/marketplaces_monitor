@@ -10,9 +10,10 @@ class Available_bots(BaseCommand):
     def __init__(self):
         description = "List of available bots to monitor"
         params = []
-        super().__init__(description, params)
+        params_optional = []
+        super().__init__(description, params, params_optional)
 
-    async def handle(self, params, message, client):
+    async def handle(self, params, params_optional, message, client):
         str1 = ''
         str2 = ''
         str3 = ''

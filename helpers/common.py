@@ -185,3 +185,43 @@ def message_content_filter(message):
                 break
 
     return message_content
+
+
+def get_movement(value, value_past):
+    if value.isdigit() and value_past.isdigit():
+        return (int(value) - int(value_past)) / int(value_past) * 100
+    else:
+        return "N/A"
+
+
+def get_time_string_from_days(days):
+    if days == '1':
+        days_str = '24 hours'
+    else:
+        days_str = days + ' days'
+    return days_str
+
+
+def get_param_by_index(params, index):
+    try:
+        param = params[index]
+    except IndexError:
+        param = False
+    return param
+
+
+def get_optional_param_by_index(params, index, default=False):
+    try:
+        param = params[index]
+    except IndexError:
+        param = default
+    return param
+
+
+def get_renewal_param_value(param):
+    if param.lower() == "renewal":
+        return 0
+    elif param.lower() == "lt":
+        return 1
+    else:
+        return 0

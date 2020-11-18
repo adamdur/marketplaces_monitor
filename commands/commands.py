@@ -6,10 +6,11 @@ class Commands(BaseCommand):
 
     def __init__(self):
         description = "Displays all available commands"
-        params = None
-        super().__init__(description, params)
+        params = []
+        params_optional = []
+        super().__init__(description, params, params_optional)
 
-    async def handle(self, params, message, client):
+    async def handle(self, params, params_optional, message, client):
         from handlers.message_handler import COMMAND_HANDLERS
         msg = message.author.mention + "\n"
 
@@ -23,10 +24,12 @@ class Commands(BaseCommand):
 
         msg += "\n\n" \
                ">>> **PARAMETERS DESCRIPTION:**\n" \
-               "*<bot>* - name of bot // *use command **{}available_bots** to see list of available bots*\n" \
-               "*<renewal_type>* - renewal type **[renewal, lt]**\n" \
-               "*<types>* - types of channels separated by comma. Use **all** to create all available channels // *use command **{}available_channel_types** to see available channels*\n" \
-               "*<type>* - single type of channel **[wts, wtb]**\n" \
-               "*<days>* - number of days\n".format(settings.COMMAND_PREFIX, settings.COMMAND_PREFIX)
+               "**<PARAM>** = required parameter\n" \
+               "**[PARAM]** = optional parameter\n" \
+               "*bot* - name of bot // *use command **{}available_bots** to see list of available bots*\n" \
+               "*renewal* - renewal type **[renewal, lt]** / *default=renewal*\n" \
+               "*types* - types of channels separated by comma. Use **all** to create all available channels. *Use command **{}available_channel_types** to see available channels*\n" \
+               "*type* - single type of channel **[wts, wtb]** / *default=wtb*\n" \
+               "*days* - number of days / *default=1*\n".format(settings.COMMAND_PREFIX, settings.COMMAND_PREFIX)
 
         await message.channel.send(msg)

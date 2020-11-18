@@ -5,6 +5,8 @@ from commands.base_command import BaseCommand
 from helpers import channel_categories as channel_categories_helper
 from helpers import channels as channels_helper
 from helpers import setup_data as setup_data_helper
+from helpers import common as common_helper
+from helpers import errors as errors_helper
 
 
 class Create(BaseCommand):
@@ -12,33 +14,31 @@ class Create(BaseCommand):
     def __init__(self):
         description = "Create new monitor channel"
         params = ['bot', 'types']
-        super().__init__(description, params)
+        params_optional = []
+        super().__init__(description, params, params_optional)
 
-    async def handle(self, params, message, client):
+    async def handle(self, params, params_optional, message, client):
         is_setup_channel = await channels_helper.is_setup_channel(message)
         if not is_setup_channel:
             return
 
-        if message.channel.name.lower() != settings.DEFAULT_SETUP_CHANNEL:
+        bot = common_helper.get_param_by_index(params, 0)
+        type_param = common_helper.get_param_by_index(params, 1)
+
+        if not await errors_helper.check_bot_param(bot, message.channel):
             return
 
-        if params[0] not in settings.ALLOWED_BOTS:
-            return await message.channel.send(":x: Bot not available. Use command **{}available_bots** to see list "
-                                              "of available bots".format(settings.COMMAND_PREFIX))
-
-        if params[1] == 'all':
+        if type_param == 'all':
             types = settings.ALLOWED_CHANNEL_TYPES
         else:
-            types = params[1].split(',')
+            types = type_param.split(',')
 
         for type in types:
-            if type not in settings.ALLOWED_CHANNEL_TYPES:
-                await message.channel.send(":x: Channel type not available. Use command **{}available_channel_types** "
-                                           "to see list of available channel types".format(settings.COMMAND_PREFIX))
+            if not await errors_helper.check_channel_type_param(type, message.channel):
                 continue
 
             category = await channel_categories_helper.get_default_channel_category(message.guild)
-            channel_name = params[0] + "-" + type
+            channel_name = bot + "-" + type
             channel = channels_helper.get_channel(message.guild.channels, channel_name)
 
             if channel and int(channel.category_id) == int(category.id):

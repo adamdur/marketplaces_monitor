@@ -6,34 +6,40 @@ from commands.base_command import BaseCommand
 
 from helpers import channels as channels_helper
 from helpers import db as db_helper
+from helpers import common as common_helper
+from helpers import errors as errors_helper
 
 
 class Pricing(BaseCommand):
 
     def __init__(self):
         description = "Shows bots sorted by average price at a given time"
-                      # "```types = [{}]\n" \
-                      # "days = number of days you want to get average price from (max is {})```".format(", ".join(settings.ACTIVITY_CHANNEL_TYPES), settings.MAX_DAYS_DATA_CAPTURE)
-        params = ['type', 'days']
-        super().__init__(description, params)
+        params = []
+        params_optional = ['days', 'type', 'renewal']
+        super().__init__(description, params, params_optional)
 
-    async def handle(self, params, message, client):
+    async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
         if not is_commands_channel:
             return
-        type = params[0]
-        days = params[1]
+        days = common_helper.get_optional_param_by_index(params_optional, 0, "1")
+        type = common_helper.get_optional_param_by_index(params_optional, 1, "wtb")
+        renewal_param = common_helper.get_optional_param_by_index(params_optional, 2, "renewal")
 
-        if type not in settings.ACTIVITY_CHANNEL_TYPES:
-            return await message.channel.send(":x: Channel type not available. Only **[{}]** types allowed with activity command".format(", ".join(settings.ACTIVITY_CHANNEL_TYPES)))
-        if not days.isdigit() or int(days) > settings.MAX_DAYS_DATA_CAPTURE:
-            return await message.channel.send(":x: Parameter of number of days must be number with max value of **{}**".format(settings.MAX_DAYS_DATA_CAPTURE))
+        if not await errors_helper.check_days_param(days, message.channel):
+            return
+        if not await errors_helper.check_type_param(type, message.channel):
+            return
+        if not await errors_helper.check_renewal_param(renewal_param, message.channel):
+            return
+
+        renewal = common_helper.get_renewal_param_value(renewal_param)
 
         db = db_helper.mysql_get_mydb()
-        data = db_helper.get_price_stats(db, type, days)
+        data = db_helper.get_pricing(db, type, days, renewal)
 
-        if not data:
-            return await message.channel.send(":exclamation: Something went wrong while calculating data. Please try again")
+        if not await errors_helper.check_db_response(data, message.channel):
+            return
 
         index = 1
         stats_str = ''
@@ -52,23 +58,17 @@ class Pricing(BaseCommand):
                 status = ':orange_circle:'
             else:
                 status = ':red_circle:'
+            msg = status + ' {0}. {1}\u2002|\u2002**${2:.0f}**\n'.format(index, bot['bot'].capitalize(), bot['price'])
             if index <= math.ceil(len(data) / 2):
-                stats_str += status + ' {0}. {1}\u2002|\u2002**${2:.0f}**\n'.format(index, bot['bot'].capitalize(), bot['price'])
+                stats_str += msg
             else:
-                stats_str_scnd += status + ' {0}. {1}\u2002|\u2002**${2:.0f}**\n'.format(index, bot['bot'].capitalize(), bot['price'])
+                stats_str_scnd += msg
             index += 1
 
-        if days == '1':
-            days_str = '24 hours'
-        else:
-            days_str = days + ' days'
+        days_str = common_helper.get_time_string_from_days(days)
 
-        description = "**Bots sorted by average price of {} posts in last {}:**"
-                      # ":fire: $5500+ \u2003\u2003\u2003\u2003\u2003\u2003 :yellow_circle: $1000 - $2000\n" \
-                      # ":blue_circle: $3500 - $5500 \u2003\u2003\u2003 :orange_circle: $450 - $1000\n" \
-                      # ":green_circle: $2000 - $3500 \u2003\u2003\u2003 :red_circle: $450 >"
-        embed = discord.Embed(title="{} POSTS STATS".format(type.upper()), description=description.format(type.upper(), days_str), color=settings.DEFAULT_EMBED_COLOR)
-        # embed.add_field(name="Bots sorted by number of {} posts in last {}:".format(type.upper(), days_str), value="", inline=False)
+        description = "**{} bots sorted by average price of {} posts in last {}:**"
+        embed = discord.Embed(title="{} {} POSTS STATS".format(renewal_param.upper(), type.upper()), description=description.format(renewal_param.upper(), type.upper(), days_str), color=settings.DEFAULT_EMBED_COLOR)
         embed.add_field(name="\u200b", value=stats_str, inline=True)
         embed.add_field(name="\u200b", value=stats_str_scnd, inline=True)
         embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)

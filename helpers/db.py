@@ -36,37 +36,51 @@ def insert_post(db, data):
     return post
 
 
-def get_activity_from(db, bot, renewal, type, days):
+def get_activity_from(db, bot, type, days):
     cursor = db.cursor(dictionary=True)
-    end_query = ("SELECT AVG(price) AS average, COUNT(*) AS count FROM posts "
+    end_query = ("SELECT AVG(price) AS average, COUNT(*) AS count, is_lifetime FROM posts "
                  "WHERE bot = %s "
-                 "AND is_lifetime = %s "
                  "AND type = %s "
                  "AND created_at > %s "
-                 "AND created_at < %s")
-    last_day_query = ("SELECT AVG(price) AS average, COUNT(*) AS count FROM posts "
+                 "AND created_at < %s"
+                 "GROUP BY is_lifetime")
+    last_day_query = ("SELECT AVG(price) AS average, COUNT(*) AS count, is_lifetime FROM posts "
                       "WHERE bot = %s "
-                      "AND is_lifetime = %s "
                       "AND type = %s "
                       "AND created_at > %s "
-                      "AND created_at < %s")
+                      "AND created_at < %s"
+                      "GROUP BY is_lifetime")
     now = datetime.datetime.now()
     last_day = now - datetime.timedelta(days=1)
     end = last_day - datetime.timedelta(days=int(days))
 
-    cursor.execute(end_query, (bot, renewal, type, end, last_day))
-    end_data = cursor.fetchone()
-    cursor.execute(last_day_query, (bot, renewal, type, last_day, now))
-    last_day_data = cursor.fetchone()
+    cursor.execute(end_query, (bot, type, end, last_day))
+    end_data = cursor.fetchall()
+    cursor.execute(last_day_query, (bot, type, last_day, now))
+    last_day_data = cursor.fetchall()
 
     db.commit()
     db.close()
-    return {
-        'last_day': last_day_data['average'],
-        'last_day_count': last_day_data['count'],
-        'end_day': end_data['average'],
-        'end_day_count': end_data['count']
+
+    full_data = {
+        'renewal': {},
+        'lifetime': {}
     }
+    for data in end_data:
+        if data['is_lifetime'] == 0:
+            full_data['renewal']['end_day'] = data['average']
+            full_data['renewal']['end_day_count'] = data['count']
+        elif data['is_lifetime'] == 1:
+            full_data['lifetime']['end_day'] = data['average']
+            full_data['lifetime']['end_day_count'] = data['count']
+    for data in last_day_data:
+        if data['is_lifetime'] == 0:
+            full_data['renewal']['last_day'] = data['average']
+            full_data['renewal']['last_day_count'] = data['count']
+        elif data['is_lifetime'] == 1:
+            full_data['lifetime']['last_day'] = data['average']
+            full_data['lifetime']['last_day_count'] = data['count']
+    return full_data
 
 
 def get_activity_stats(db, renewal, type, days):
@@ -143,19 +157,20 @@ def get_posts_stats(db, type, days):
     return data
 
 
-def get_price_stats(db, type, days):
+def get_pricing(db, type, days, renewal):
     cursor = db.cursor(dictionary=True)
     query = ("SELECT bot, AVG(price) AS price FROM posts "
              "WHERE bot != '0' "
              "AND type = %s "
              "AND created_at > %s "
              "AND created_at < %s "
+             "AND is_lifetime = %s "
              "GROUP BY bot "
              "ORDER BY price DESC ")
     now = datetime.datetime.now()
     last_day = now - datetime.timedelta(days=int(days))
 
-    cursor.execute(query, (type, last_day, now))
+    cursor.execute(query, (type, last_day, now, renewal))
     data = cursor.fetchall()
     db.commit()
     db.close()
@@ -181,3 +196,49 @@ def get_average_price_by_bot(db, bot, type, renewal):
     db.close()
 
     return data['price']
+
+
+def get_pricing_stats(db, days, renewal):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT bot, type, AVG(price) AS price FROM posts "
+             "WHERE bot != '0' "
+             "AND type IN ('wts', 'wtb') "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "GROUP BY bot, type "
+             "HAVING price > 0 "
+             "ORDER BY bot")
+    query2 = ("SELECT bot, type, AVG(price) AS price FROM posts "
+              "WHERE bot != '0' "
+              "AND type IN ('wts', 'wtb') "
+              "AND is_lifetime = %s "
+              "AND created_at > %s "
+              "AND created_at < %s "
+              "GROUP BY bot, type "
+              "HAVING price > 0 "
+              "ORDER BY bot")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=int(days))
+    end_day = last_day - datetime.timedelta(days=int(2))
+
+    cursor.execute(query, (renewal, last_day, now))
+    data = cursor.fetchall()
+    cursor.execute(query2, (renewal, end_day, last_day))
+    data_past = cursor.fetchall()
+    db.commit()
+    db.close()
+
+    full_data = {}
+    for row in data:
+        if row['bot'] != '0':
+            if row['bot'] in full_data:
+                full_data[row['bot']].update({row['type']: row['price']})
+            else:
+                full_data[row['bot']] = {row['type']: row['price']}
+    for row in data_past:
+        if row['bot'] != '0':
+            if row['bot'] in full_data:
+                full_data[row['bot']].update({row['type'] + "_past": row['price']})
+
+    return full_data

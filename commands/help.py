@@ -9,10 +9,11 @@ class Help(BaseCommand):
 
     def __init__(self):
         description = "Help message"
-        params = None
-        super().__init__(description, params)
+        params = []
+        params_optional = []
+        super().__init__(description, params, params_optional)
 
-    async def handle(self, params, message, client):
+    async def handle(self, params, params_optional, message, client):
         is_setup_channel = await channels_helper.is_setup_channel(message)
         if not is_setup_channel:
             return
