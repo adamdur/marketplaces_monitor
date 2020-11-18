@@ -14,7 +14,7 @@ class Activity(BaseCommand):
     def __init__(self):
         description = "Shows activity and average price of selected bot, type and selected days"
         params = ['bot']
-        params_optional = ['type', 'days']
+        params_optional = ['days', 'type']
         super().__init__(description, params, params_optional)
 
     async def handle(self, params, params_optional, message, client):
