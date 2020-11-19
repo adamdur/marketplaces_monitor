@@ -31,5 +31,7 @@ class Commands(BaseCommand):
                "*types* - types of channels separated by comma. Use **all** to create all available channels. *Use command **{}available_channel_types** to see available channels*\n" \
                "*type* - single type of channel **[wts, wtb]** / *default=wtb*\n" \
                "*days* - number of days / *default=1*\n".format(settings.COMMAND_PREFIX, settings.COMMAND_PREFIX)
-
+        msg += "\n\n" \
+               "To see all parameters within specific command use:\n" \
+               "**{}<command> help** - *replace <command> with your command* (e.g. **?activity help**)".format(settings.COMMAND_PREFIX)
         await message.channel.send(msg)
