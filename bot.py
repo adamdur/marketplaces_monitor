@@ -140,9 +140,10 @@ def main(argv):
                     if price_level and price_str:
                         if type in ['wts', 'wtb'] and int(price_level) == 1:
                             message_data = common_helper.build_status_message(final_bot, price_str, type, is_lifetime)
-                            embed.insert_field_at(5, name="Status:", value=message_data['message'], inline=False)
-                            if message_data['notify'] is True:
-                                notify = True
+                            if message_data:
+                                embed.insert_field_at(5, name="Status:", value=message_data['message'], inline=False)
+                                if message_data['notify'] is True:
+                                    notify = True
 
             for data in this.setup_data:
                 guild_id = list(data)[0]

@@ -141,6 +141,8 @@ def build_status_message(bot, price, type, renewal):
     post_price = get_db_price(price)
     db = db_helper.mysql_get_mydb()
     avg_price = db_helper.get_average_price_by_bot(db, bot, type, renewal)
+    if not avg_price:
+        return False
     avg_price = int(avg_price)
     percentage = (post_price - avg_price) / avg_price * 100
     icon = ''
