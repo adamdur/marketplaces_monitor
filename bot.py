@@ -2,12 +2,16 @@ import getopt
 import sys
 import settings
 import discord
+import schedule
+import time
+from multiprocessing import Process
 
 from handlers import message_handler
 from helpers import guild as guild_helper
 from helpers import common as common_helper
 from helpers import setup_data as setup_data_helper
 from helpers import channels as channels_helper
+from helpers import bb_api as botbroker
 
 this = sys.modules[__name__]
 this.running = False
@@ -176,5 +180,25 @@ def main(argv):
 ###############################################################################
 
 
+def get_bb_bots():
+    schedule.every(30).minutes.do(bot_api_call)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+def bot_api_call():
+    bots = botbroker.get_bots(sort_by='name', order='asc')
+    if bots:
+        setup_data_helper.save_botbroker_bots(bots)
+
+
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    start = time.time()
+    p1 = Process(target=main, args=(sys.argv[1:],))
+    p2 = Process(target=get_bb_bots, args=())
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+    print('Finished. Total elapsed time: {}'.format(time.time() - start))

@@ -1,5 +1,7 @@
 import settings
 
+from helpers import setup_data as setup_data_helper
+
 
 async def check_renewal_param(param, channel):
     if param.lower() not in ['renewal', 'lt']:
@@ -13,6 +15,7 @@ async def check_type_param(param, channel):
         await channel.send(":x: Channel type not available. Only **[{}]** types allowed with activity command".format(", ".join(settings.ACTIVITY_CHANNEL_TYPES)))
         return False
     return True
+
 
 async def check_channel_type_param(param, channel):
     if param not in settings.ALLOWED_CHANNEL_TYPES:
@@ -38,5 +41,30 @@ async def check_bot_param(param, channel):
 async def check_db_response(data, channel):
     if not data:
         await channel.send(":exclamation: Something went wrong while calculating data. Please try again")
+        return False
+    return True
+
+
+async def check_bb_bot_param(param, channel):
+    bots = setup_data_helper.get_botbroker_bots()
+    for i, page in bots.items():
+        for bot in page:
+            name = bot['name'].replace(' ', '_')
+            if param in name.lower():
+                return bot
+    await channel.send(":x: Bot not found in BotBroker database. Use command **{}available_bots_bb** to see list of available bots of BotBroker".format(settings.COMMAND_PREFIX))
+    return False
+
+
+async def check_bb_data_type_param(param, channel):
+    if param not in settings.BB_DATA_TYPES:
+        await channel.send(":x: Data type not available for BotBroker. Available data types are **[{}]** for BotBroker".format(", ".join(settings.BB_DATA_TYPES)))
+        return False
+    return True
+
+
+async def check_bb_renewal_param(param, channel):
+    if param not in settings.BB_RENEWAL_TYPES:
+        await channel.send(":x: Renewal type not available for BotBroker. Available renewal types are **[{}]** for BotBroker".format(", ".join(settings.BB_RENEWAL_TYPES)))
         return False
     return True

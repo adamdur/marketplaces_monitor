@@ -209,7 +209,7 @@ def get_param_by_index(params, index):
         param = params[index]
     except IndexError:
         param = False
-    return param
+    return param.lower()
 
 
 def get_optional_param_by_index(params, index, default=False):
@@ -217,7 +217,7 @@ def get_optional_param_by_index(params, index, default=False):
         param = params[index]
     except IndexError:
         param = default
-    return param
+    return param.lower()
 
 
 def get_renewal_param_value(param):

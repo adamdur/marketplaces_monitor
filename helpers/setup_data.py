@@ -59,3 +59,23 @@ async def delete_guild_file(guild):
         os.remove(file)
         return True
     return False
+
+
+def get_botbroker_bots(pagination=False):
+    file = settings.BB_DATA_DIR + '/bots.json'
+    if not os.path.isfile(file):
+        with open(file, mode='w') as f:
+            f.write('{}')
+            return None
+    else:
+        with open(file) as data:
+            bots = json.load(data)
+            if pagination is False:
+                del bots['pagination']
+            return bots
+
+
+def save_botbroker_bots(data):
+    file = settings.BB_DATA_DIR + '/bots.json'
+    with open(file, mode='w') as f:
+        f.write(json.dumps(data, indent=4))
