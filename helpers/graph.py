@@ -21,7 +21,11 @@ def create_line_graph(data, bot='', type='price'):
     s2mask = np.isfinite(series2)
 
     fig, ax = plt.subplots(figsize=(15, 10))
-    title_obj = plt.title('Marketplaces pricing stats{}'.format(' for ' + bot.capitalize() if bot else ''), fontsize=20)
+    if type == 'price':
+        title_label = 'pricing'
+    elif type == 'demand':
+        title_label = 'demand'
+    title_obj = plt.title('Marketplaces {} stats{}'.format(title_label, ' for ' + bot.capitalize() if bot else ''), fontsize=20)
     plt.setp(title_obj, color=TEXT_COLOR)
 
     ax.plot(xs[s1mask], series1[s1mask], linestyle='-', marker='o', linewidth=3, label='wts')
