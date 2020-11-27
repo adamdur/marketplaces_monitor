@@ -54,14 +54,11 @@ class Graph_demand(BaseCommand):
         wtb_average_week = graph_helper.get_list_average(data['wtb'][-7:])
 
         embed = discord.Embed(title="21-day demand graph for {} {}".format(bot.capitalize(), renewal_param.lower()), description="", color=settings.DEFAULT_EMBED_COLOR)
-        embed.add_field(name="\u200b", value="> *WTS*", inline=True)
-        embed.add_field(name="\u200b", value="> *WTB*", inline=True)
+        embed.add_field(name="21-day average (WTS):", value="{}".format(round(wts_average_all)), inline=True)
+        embed.add_field(name="21-day average (WTB):", value="{}".format(round(wtb_average_all)), inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=True)
-        embed.add_field(name="21-day average:", value="{}".format(round(wts_average_all)), inline=True)
-        embed.add_field(name="21-day average:", value="{}".format(round(wtb_average_all)), inline=True)
-        embed.add_field(name="\u200b", value="\u200b", inline=True)
-        embed.add_field(name="7-day average:", value="{}".format(round(wts_average_week)), inline=True)
-        embed.add_field(name="7-day average:", value="{}".format(round(wtb_average_week)), inline=True)
+        embed.add_field(name="7-day average (WTS):", value="{}".format(round(wts_average_week)), inline=True)
+        embed.add_field(name="7-day average (WTB):", value="{}".format(round(wtb_average_week)), inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         embed.set_image(url="attachment://{}".format(filename))
