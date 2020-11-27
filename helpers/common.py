@@ -223,7 +223,7 @@ def get_optional_param_by_index(params, index, default=False):
 def get_renewal_param_value(param):
     if param.lower() == "renewal":
         return 0
-    elif param.lower() == "lt":
+    elif param.lower() == "lt" or param.lower() == "lifetime":
         return 1
     else:
         return 0

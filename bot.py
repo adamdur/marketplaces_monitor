@@ -190,6 +190,7 @@ def get_bb_bots():
 def bot_api_call():
     bots = botbroker.get_bots(sort_by='name', order='asc')
     if bots:
+        print('[UPDATING BB BOTS]')
         setup_data_helper.save_botbroker_bots(bots)
 
 

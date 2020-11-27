@@ -242,3 +242,96 @@ def get_pricing_stats(db, days, renewal):
                 full_data[row['bot']].update({row['type'] + "_past": row['price']})
 
     return full_data
+
+
+def get_graph_data_pricing(db, bot, renewal):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT type, AVG(price) AS price, DATE(created_at) AS date FROM posts "
+             "WHERE bot = %s "
+             "AND type IN ('wts', 'wtb') "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "GROUP BY type, date "
+             "HAVING price > 0 "
+             "ORDER BY bot")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=int(21))
+
+    cursor.execute(query, (bot, renewal, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+
+    base = datetime.datetime.today()
+    date_list = [base - datetime.timedelta(days=x) for x in range(21)]
+    date_list.reverse()
+
+    xlabels = []
+    wts = []
+    wtb = []
+    for date in date_list:
+        wts_value = None
+        wtb_value = None
+        for row in data:
+            if row['date'] == date.date():
+                if row['type'] == 'wts':
+                    wts_value = round(row['price'])
+                elif row['type'] == 'wtb':
+                    wtb_value = round(row['price'])
+        wts.append(wts_value)
+        wtb.append(wtb_value)
+        xlabels.append(date.strftime("%Y/%m/%d"))
+
+    return {
+        'xlabels': xlabels,
+        'wts': wts,
+        'wtb': wtb
+    }
+
+
+def get_graph_data_demand(db, bot, renewal):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT type, COUNT(*) AS count, DATE(created_at) AS date FROM posts "
+             "WHERE bot = %s "
+             "AND type IN ('wts', 'wtb') "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "GROUP BY type, date "
+             "HAVING count > 0 "
+             "ORDER BY bot")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=int(21))
+
+    cursor.execute(query, (bot, renewal, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+
+    base = datetime.datetime.today()
+    date_list = [base - datetime.timedelta(days=x) for x in range(21)]
+    date_list.reverse()
+
+    xlabels = []
+    wts = []
+    wtb = []
+    for date in date_list:
+        wts_value = None
+        wtb_value = None
+        for row in data:
+            if row['date'] == date.date():
+                if row['type'] == 'wts':
+                    wts_value = round(row['count'])
+                elif row['type'] == 'wtb':
+                    wtb_value = round(row['count'])
+        wts.append(wts_value)
+        wtb.append(wtb_value)
+        xlabels.append(date.strftime("%Y/%m/%d"))
+
+    return {
+        'xlabels': xlabels,
+        'wts': wts,
+        'wtb': wtb
+    }
+

@@ -135,4 +135,5 @@ settings.py
 .idea
 setup
 botbroker
+tmp
 /notes.txt
