@@ -44,7 +44,7 @@ class Graph_demand(BaseCommand):
         if not data['wts'] and not data['wtb']:
             return await waiting_message.edit(content=":exclamation: No sufficient data found for {}. Try again later...".format(bot.upper()))
 
-        filepath = graph_helper.create_line_graph(data, bot=bot)
+        filepath = graph_helper.create_line_graph(data, bot=bot, type='demand')
         filename = filepath.rsplit('/', 1)[-1]
         file = discord.File(filepath, filename=filename)
 

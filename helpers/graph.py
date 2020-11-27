@@ -10,7 +10,7 @@ TEXT_COLOR = '#b9c3cc'
 GRID_COLOR = '#454b51'
 
 
-def create_line_graph(data, bot=''):
+def create_line_graph(data, bot='', type='price'):
     xlabels = data['xlabels']
     wts = data['wts']
     wtb = data['wtb']
@@ -47,7 +47,11 @@ def create_line_graph(data, bot=''):
     ax.tick_params(axis='x', colors=TEXT_COLOR)
     ax.tick_params(axis='y', colors=TEXT_COLOR)
 
-    ax.set(ylabel='Price ($)')
+    if type == 'price':
+        label = 'Average Price ($)'
+    elif type == 'demand':
+        label = 'Number of posts per day'
+    ax.set(ylabel=label)
     ax.grid(color=GRID_COLOR)
     ax.set_facecolor(BG_COLOR)
     fig.patch.set_facecolor(BG_COLOR)
