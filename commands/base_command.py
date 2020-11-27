@@ -8,16 +8,17 @@ class BaseCommand:
         self.name = type(self).__name__.lower()
         self.params = params
         self.params_optional = params_optional
+        self.description = description
 
-        desc = f"**{settings.COMMAND_PREFIX}{self.name}**"
-
-        if self.params:
-            desc += " " + " ".join(f"*<{p}>*" for p in params)
-        if self.params_optional:
-            desc += " " + " ".join(f"*[{p}]*" for p in params_optional)
-
-        desc += f"\n> {description}\n"
-        self.description = desc
+        # desc = f"**{settings.COMMAND_PREFIX}{self.name}**"
+        #
+        # if self.params:
+        #     desc += " " + " ".join(f"*<{p}>*" for p in params)
+        # if self.params_optional:
+        #     desc += " " + " ".join(f"*[{p}]*" for p in params_optional)
+        #
+        # desc += f"\n> {description}\n"
+        # self.description = desc
 
     async def handle(self, params, params_optional, message, client):
         raise NotImplementedError  # To be defined by every command
