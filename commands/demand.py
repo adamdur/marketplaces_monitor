@@ -15,15 +15,15 @@ class Demand(BaseCommand):
     def __init__(self):
         description = "Shows bots sorted by number of posts at a given time"
         params = []
-        params_optional = ['days', 'type']
+        params_optional = ['type', 'days']
         super().__init__(description, params, params_optional)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
         if not is_commands_channel:
             return
-        days = common_helper.get_optional_param_by_index(params_optional, 0, "1")
-        type = common_helper.get_optional_param_by_index(params_optional, 1, "wtb")
+        type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
+        days = common_helper.get_optional_param_by_index(params_optional, 1, "1")
 
         if not await errors_helper.check_days_param(days, message.channel):
             return

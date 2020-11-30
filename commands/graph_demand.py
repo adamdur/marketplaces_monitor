@@ -50,15 +50,20 @@ class Graph_demand(BaseCommand):
 
         wts_average_all = graph_helper.get_list_average(data['wts'])
         wts_average_week = graph_helper.get_list_average(data['wts'][-7:])
+        wts_average_day = round(data['wts_day'], 0) if data['wts_day'] else None
         wtb_average_all = graph_helper.get_list_average(data['wtb'])
         wtb_average_week = graph_helper.get_list_average(data['wtb'][-7:])
+        wtb_average_day = round(data['wtb_day'], 0) if data['wtb_day'] else None
 
-        embed = discord.Embed(title="21-day demand graph for {} {}".format(bot.capitalize(), renewal_param.lower()), description="", color=settings.DEFAULT_EMBED_COLOR)
-        embed.add_field(name="21-day average (WTS):", value="{}".format(round(wts_average_all)), inline=True)
-        embed.add_field(name="21-day average (WTB):", value="{}".format(round(wtb_average_all)), inline=True)
+        embed = discord.Embed(title="{}-day demand graph for {} {}".format(settings.GRAPH_DATA_DAYS, bot.capitalize(), renewal_param.lower()), description="", color=settings.DEFAULT_EMBED_COLOR)
+        embed.add_field(name="{}-day average (WTS):".format(settings.GRAPH_DATA_DAYS), value="{}".format(round(wts_average_all)), inline=True)
+        embed.add_field(name="{}-day average (WTB):".format(settings.GRAPH_DATA_DAYS), value="{}".format(round(wtb_average_all)), inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=True)
         embed.add_field(name="7-day average (WTS):", value="{}".format(round(wts_average_week)), inline=True)
         embed.add_field(name="7-day average (WTB):", value="{}".format(round(wtb_average_week)), inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
+        embed.add_field(name="24h average (WTS):", value="{}".format(f"{wts_average_day}" if wts_average_day else 'N/A'), inline=True)
+        embed.add_field(name="24h average (WTB):", value="{}".format(f"{wtb_average_day}" if wtb_average_day else 'N/A'), inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         embed.set_image(url="attachment://{}".format(filename))

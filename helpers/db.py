@@ -219,8 +219,8 @@ def get_pricing_stats(db, days, renewal):
               "HAVING price > 0 "
               "ORDER BY bot")
     now = datetime.datetime.now()
-    last_day = now - datetime.timedelta(days=int(days))
-    end_day = last_day - datetime.timedelta(days=int(2))
+    last_day = now - datetime.timedelta(days=int(1))
+    end_day = last_day - datetime.timedelta(days=int(days))
 
     cursor.execute(query, (renewal, last_day, now))
     data = cursor.fetchall()
@@ -246,34 +246,50 @@ def get_pricing_stats(db, days, renewal):
 
 def get_graph_data_pricing(db, bot, renewal):
     cursor = db.cursor(dictionary=True)
-    query = ("SELECT type, AVG(price) AS price, DATE(created_at) AS date FROM posts "
+    query_graph = ("SELECT type, AVG(price) AS price, DATE(created_at) AS date FROM posts "
+                   "WHERE bot = %s "
+                   "AND type IN ('wts', 'wtb') "
+                   "AND is_lifetime = %s "
+                   "AND created_at > %s "
+                   "AND created_at < %s "
+                   "GROUP BY type, date "
+                   "HAVING price > 0 "
+                   "ORDER BY date ASC")
+    query = ("SELECT type, AVG(price) AS price FROM posts "
              "WHERE bot = %s "
              "AND type IN ('wts', 'wtb') "
              "AND is_lifetime = %s "
              "AND created_at > %s "
              "AND created_at < %s "
-             "GROUP BY type, date "
-             "HAVING price > 0 "
-             "ORDER BY bot")
+             "GROUP BY type "
+             "HAVING price > 0 ")
     now = datetime.datetime.now()
-    last_day = now - datetime.timedelta(days=int(21))
+    last_day = now - datetime.timedelta(days=int(1))
+    start = now - datetime.timedelta(days=int(settings.GRAPH_DATA_DAYS))
 
+    graph_start = start.replace(hour=00, minute=00, second=00)
+    graph_end = last_day.replace(hour=23, minute=59, second=59)
+
+    cursor.execute(query_graph, (bot, renewal, graph_start, graph_end))
+    data_graph = cursor.fetchall()
     cursor.execute(query, (bot, renewal, last_day, now))
-    data = cursor.fetchall()
+    data_day = cursor.fetchall()
     db.commit()
     db.close()
 
     base = datetime.datetime.today()
-    date_list = [base - datetime.timedelta(days=x) for x in range(21)]
+    date_list = [base - datetime.timedelta(days=x) for x in range(settings.GRAPH_DATA_DAYS)]
     date_list.reverse()
 
     xlabels = []
     wts = []
+    wts_day = None
     wtb = []
+    wtb_day = None
     for date in date_list:
         wts_value = None
         wtb_value = None
-        for row in data:
+        for row in data_graph:
             if row['date'] == date.date():
                 if row['type'] == 'wts':
                     wts_value = round(row['price'])
@@ -283,43 +299,67 @@ def get_graph_data_pricing(db, bot, renewal):
         wtb.append(wtb_value)
         xlabels.append(date.strftime("%Y/%m/%d"))
 
+    for row in data_day:
+        if row['type'] == 'wts':
+            wts_day = row['price']
+        elif row['type'] == 'wtb':
+            wtb_day = row['price']
+
     return {
         'xlabels': xlabels,
         'wts': wts,
-        'wtb': wtb
+        'wtb': wtb,
+        'wts_day': wts_day,
+        'wtb_day': wtb_day
     }
 
 
 def get_graph_data_demand(db, bot, renewal):
     cursor = db.cursor(dictionary=True)
-    query = ("SELECT type, COUNT(*) AS count, DATE(created_at) AS date FROM posts "
+    query_graph = ("SELECT type, COUNT(*) AS count, DATE(created_at) AS date FROM posts "
+                   "WHERE bot = %s "
+                   "AND type IN ('wts', 'wtb') "
+                   "AND is_lifetime = %s "
+                   "AND created_at > %s "
+                   "AND created_at < %s "
+                   "GROUP BY type, date "
+                   "HAVING count > 0 "
+                   "ORDER BY date ASC")
+    query = ("SELECT type, COUNT(*) AS count FROM posts "
              "WHERE bot = %s "
              "AND type IN ('wts', 'wtb') "
              "AND is_lifetime = %s "
              "AND created_at > %s "
              "AND created_at < %s "
-             "GROUP BY type, date "
-             "HAVING count > 0 "
-             "ORDER BY bot")
+             "GROUP BY type "
+             "HAVING count > 0 ")
     now = datetime.datetime.now()
-    last_day = now - datetime.timedelta(days=int(21))
+    last_day = now - datetime.timedelta(days=int(1))
+    start = now - datetime.timedelta(days=int(settings.GRAPH_DATA_DAYS))
 
+    graph_start = start.replace(hour=00, minute=00, second=00)
+    graph_end = last_day.replace(hour=23, minute=59, second=59)
+
+    cursor.execute(query_graph, (bot, renewal, graph_start, graph_end))
+    data_graph = cursor.fetchall()
     cursor.execute(query, (bot, renewal, last_day, now))
-    data = cursor.fetchall()
+    data_day = cursor.fetchall()
     db.commit()
     db.close()
 
     base = datetime.datetime.today()
-    date_list = [base - datetime.timedelta(days=x) for x in range(21)]
+    date_list = [base - datetime.timedelta(days=x) for x in range(settings.GRAPH_DATA_DAYS)]
     date_list.reverse()
 
     xlabels = []
     wts = []
+    wts_day = None
     wtb = []
+    wtb_day = None
     for date in date_list:
         wts_value = None
         wtb_value = None
-        for row in data:
+        for row in data_graph:
             if row['date'] == date.date():
                 if row['type'] == 'wts':
                     wts_value = round(row['count'])
@@ -329,9 +369,16 @@ def get_graph_data_demand(db, bot, renewal):
         wtb.append(wtb_value)
         xlabels.append(date.strftime("%Y/%m/%d"))
 
+    for row in data_day:
+        if row['type'] == 'wts':
+            wts_day = row['count']
+        elif row['type'] == 'wtb':
+            wtb_day = row['count']
+
     return {
         'xlabels': xlabels,
         'wts': wts,
-        'wtb': wtb
+        'wtb': wtb,
+        'wts_day': wts_day,
+        'wtb_day': wtb_day
     }
-

@@ -14,7 +14,7 @@ class Activity(BaseCommand):
     def __init__(self):
         description = "Shows activity and average price of selected bot, type and selected days"
         params = ['bot']
-        params_optional = ['days', 'type']
+        params_optional = ['type', 'days']
         super().__init__(description, params, params_optional)
 
     async def handle(self, params, params_optional, message, client):
@@ -23,8 +23,8 @@ class Activity(BaseCommand):
             return
 
         bot = common_helper.get_param_by_index(params, 0)
-        type = common_helper.get_optional_param_by_index(params_optional, 1, "wtb")
-        days = common_helper.get_optional_param_by_index(params_optional, 0, "1")
+        type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
+        days = common_helper.get_optional_param_by_index(params_optional, 1, "1")
 
         if not await errors_helper.check_bot_param(bot, message.channel):
             return

@@ -15,16 +15,16 @@ class Pricing(BaseCommand):
     def __init__(self):
         description = "Shows bots sorted by average price at a given time"
         params = []
-        params_optional = ['days', 'type', 'renewal']
+        params_optional = ['type', 'renewal', 'days']
         super().__init__(description, params, params_optional)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
         if not is_commands_channel:
             return
-        days = common_helper.get_optional_param_by_index(params_optional, 0, "1")
-        type = common_helper.get_optional_param_by_index(params_optional, 1, "wtb")
-        renewal_param = common_helper.get_optional_param_by_index(params_optional, 2, "renewal")
+        type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
+        renewal_param = common_helper.get_optional_param_by_index(params_optional, 1, "renewal")
+        days = common_helper.get_optional_param_by_index(params_optional, 2, "1")
 
         if not await errors_helper.check_days_param(days, message.channel):
             return
