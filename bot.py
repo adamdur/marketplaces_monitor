@@ -157,14 +157,32 @@ def main(argv):
 
                 for final_channel in final_channels:
                     if final_channel in channel_names:
-                        channel_id = channels[final_channel]
+                        channel_id = channels[final_channel]['id']
 
                         channel_to_post = channels_helper.get_channel_by_id(data[guild_id]['guild'].channels, channel_id)
 
+                        notify_guild = guild_helper.get_guild_by_id(client.guilds, int(guild_id))
+                        pings = await setup_data_helper.get_pings(notify_guild, final_channel)
+                        notify_handles = ''
+                        if pings:
+                            bot_name, channel_type = final_channel.split('-')
+                            if channel_type in ['wts', 'wtb']:
+                                notify_handles = ''
+                                for handle_price, handles in pings.items():
+                                    if handles and price_str != 'N/A' and int(price_level) == 1:
+                                        int_price = common_helper.get_db_price(price_str)
+                                        notify_with_handle = False
+                                        if channel_type == 'wts':
+                                            if int(handle_price) > int(int_price):
+                                                notify_with_handle = True
+                                        elif channel_type == 'wtb':
+                                            if int(handle_price) < int(int_price):
+                                                notify_with_handle = True
+                                        if notify_with_handle:
+                                            for handle in handles:
+                                                notify_handles += ' ' + handle
                         print('---> GOING TO POST IN {}'.format(final_channel))
-                        await channel_to_post.send(embed=embed)
-                        if notify and settings.NOTIFY:
-                            await channel_to_post.send(settings.NOTIFY_HANDLE)
+                        await channel_to_post.send(embed=embed, content=notify_handles)
 
     @client.event
     async def on_message(message):

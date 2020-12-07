@@ -2,6 +2,8 @@ import json
 import os
 import settings
 
+from helpers import common as common_helper
+
 
 async def get_data(guild):
     file = settings.SETUP_DIR + '/' + str(guild.id) + '.json'
@@ -35,6 +37,70 @@ async def append_data(guild, group, value):
     if key not in data[group]:
         data[group][key] = value
         await save_data(guild, data)
+
+
+async def get_pings(guild, channel):
+    if 'channels' not in settings.INIT_SETUP_DATA.keys():
+        return
+
+    data = await get_data(guild)
+    return data['channels'][channel]['pings']
+
+
+async def add_ping(message, channel, value):
+    if 'channels' not in settings.INIT_SETUP_DATA.keys():
+        return
+
+    data = await get_data(message.guild)
+    key = list(value.keys())[0]
+    value = list(value.values())[0]
+    if key not in data['channels']:
+        existing_pings = data['channels'][channel]['pings']
+        ping_exists = common_helper.get_dict_value_by_index(existing_pings, key)
+        if ping_exists:
+            handles = ping_exists + list(set(value) - set(ping_exists))
+        else:
+            handles = value
+        data['channels'][channel]['pings'][key] = handles
+
+        await save_data(message.guild, data)
+        if handles:
+            await message.channel.send(":white_check_mark: Success. Handles **{}** will be pinged in channel <#{}> at price level {}.".format(value, data['channels'][channel]['id'], key))
+            return True
+        else:
+            await message.channel.send(":exclamation: Handle could not be created, try again...")
+            return False
+
+
+async def remove_ping(message, channel, value):
+    if 'channels' not in settings.INIT_SETUP_DATA.keys():
+        return
+
+    data = await get_data(message.guild)
+    key = list(value.keys())[0]
+    value = list(value.values())[0]
+    if key not in data['channels']:
+        existing_pings = data['channels'][channel]['pings']
+        ping_exists = common_helper.get_dict_value_by_index(existing_pings, key)
+        removed = []
+        ignored = []
+        if ping_exists:
+            handles = ping_exists
+            for val in value:
+                if val in handles:
+                    handles.remove(val)
+                    removed.append(val)
+                else:
+                    ignored.append(val)
+        else:
+            return await message.channel.send(":exclamation: No handles found for channel **{}** at price level {}".format(channel, key))
+        data['channels'][channel]['pings'][key] = handles
+
+        await save_data(message.guild, data)
+        if removed:
+            await message.channel.send(":white_check_mark: Success. Handles **{}** removed from channel <#{}> at price level {}.".format(removed, data['channels'][channel]['id'], key))
+        if ignored:
+            await message.channel.send(":exclamation: Handles **{}** not found for channel <#{}> at price level {} and were ignored.".format(ignored, data['channels'][channel]['id'], key))
 
 
 async def remove_data(guild, group, value):

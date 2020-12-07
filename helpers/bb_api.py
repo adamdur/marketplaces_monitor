@@ -10,7 +10,7 @@ def api_call(endpoint, params, headers=None):
     url = settings.BB_BASE_API_URL + "/" + endpoint
 
     try:
-        data = requests.get(url, params=params, headers=headers, timeout=3)
+        data = requests.get(url, params=params, headers=headers, timeout=settings.BB_API_TIMEOUT)
         if data.status_code == 200:
             return data
         else:
@@ -26,7 +26,7 @@ async def async_api_call(endpoint, params, headers=None, message=None):
     url = settings.BB_BASE_API_URL + "/" + endpoint
 
     try:
-        data = await requests_async.get(url, params=params, headers=headers, timeout=3)
+        data = await requests_async.get(url, params=params, headers=headers, timeout=settings.BB_API_TIMEOUT)
         return data
     except requests_async.exceptions.Timeout:
         if message:
