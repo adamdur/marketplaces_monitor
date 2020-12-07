@@ -39,7 +39,15 @@ async def append_data(guild, group, value):
         await save_data(guild, data)
 
 
-async def get_pings(guild, channel):
+async def get_guild_channels(guild):
+    if 'channels' not in settings.INIT_SETUP_DATA.keys():
+        return
+
+    data = await get_data(guild)
+    return data['channels']
+
+
+async def get_pings_for_channel(guild, channel):
     if 'channels' not in settings.INIT_SETUP_DATA.keys():
         return
 

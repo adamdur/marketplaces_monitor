@@ -162,7 +162,7 @@ def main(argv):
                         channel_to_post = channels_helper.get_channel_by_id(data[guild_id]['guild'].channels, channel_id)
 
                         notify_guild = guild_helper.get_guild_by_id(client.guilds, int(guild_id))
-                        pings = await setup_data_helper.get_pings(notify_guild, final_channel)
+                        pings = await setup_data_helper.get_pings_for_channel(notify_guild, final_channel)
                         notify_handles = ''
                         if pings:
                             bot_name, channel_type = final_channel.split('-')
