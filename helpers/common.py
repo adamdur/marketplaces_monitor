@@ -204,12 +204,12 @@ def get_time_string_from_days(days):
     return days_str
 
 
-def get_param_by_index(params, index):
+def get_param_by_index(params, index, lower=True):
     try:
         param = params[index]
     except IndexError:
         param = False
-    return param.lower()
+    return param.lower() if lower else param
 
 
 def get_optional_param_by_index(params, index, default=False):
@@ -227,3 +227,11 @@ def get_renewal_param_value(param):
         return 1
     else:
         return 0
+
+
+def get_dict_value_by_index(dct, index):
+    try:
+        value = dct[index]
+    except KeyError:
+        return False
+    return value

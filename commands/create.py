@@ -52,5 +52,5 @@ class Create(BaseCommand):
                 await message.channel.send(":exclamation: Something went wrong while creating channel. Please try again")
                 continue
 
-            await setup_data_helper.append_data(message.guild, 'channels', {new_channel.name: new_channel.id})
+            await setup_data_helper.append_data(message.guild, 'channels', {new_channel.name: {"id": new_channel.id, "pings": {}}})
             await message.channel.send(":white_check_mark: Channel <#{}> created successfully".format(new_channel.id))
