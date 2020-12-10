@@ -1,5 +1,3 @@
-import settings
-
 
 class BaseCommand:
     def __init__(self, description, params, params_optional=None):
@@ -10,15 +8,5 @@ class BaseCommand:
         self.params_optional = params_optional
         self.description = description
 
-        # desc = f"**{settings.COMMAND_PREFIX}{self.name}**"
-        #
-        # if self.params:
-        #     desc += " " + " ".join(f"*<{p}>*" for p in params)
-        # if self.params_optional:
-        #     desc += " " + " ".join(f"*[{p}]*" for p in params_optional)
-        #
-        # desc += f"\n> {description}\n"
-        # self.description = desc
-
     async def handle(self, params, params_optional, message, client):
-        raise NotImplementedError  # To be defined by every command
+        raise NotImplementedError
