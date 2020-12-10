@@ -10,6 +10,7 @@ this = sys.modules[__name__]
 
 
 def main():
+    print('BB Bots updater running...')
     schedule.every(30).minutes.do(bot_api_call)
     while True:
         schedule.run_pending()

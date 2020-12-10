@@ -102,7 +102,11 @@ def price_level(level):
 
 def get_channel_types(channel_name, message_content):
     types = []
-    if any(s in channel_name for s in ['wtro', 'wtr', 'rental', 'rent', 'rental-sell']):
+    if any(s in channel_name for s in ['rent-sell', 'rental-sell']):
+        types.append('wtro')
+    elif any(s in channel_name for s in ['rent-buy', 'rental-buy']):
+        types.append('wtr')
+    elif any(s in channel_name for s in ['wtro', 'wtr', 'rent']):
         if 'wtr ' in message_content.lower():
             types.append('wtr')
         if 'wtro' in message_content.lower():
@@ -119,8 +123,6 @@ def get_channel_types(channel_name, message_content):
                 types.append('wtb')
             if not any(n in message_content.lower() for n in ['wtt', 'wtb']):
                 types.append('wtb')
-        if not types:
-            return []
 
     return types
 

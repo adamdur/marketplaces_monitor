@@ -80,34 +80,50 @@ def build_embed(message, price_object):
 
 
 def insert_log(message, price_object):
+    db_type = common_helper.get_channel_types(message.channel.name, message.content)
+    db_price = None
+    data = None
+    if not len(db_type) == 1:
+        return
     if price_object and price_object['level'] == 1:
         db_price = common_helper.get_db_price(price_object['price'])
-        db_type = common_helper.get_channel_types(message.channel.name, message.content)
-        if not db_price or not db_type:
-            return
-        if not len(db_type) == 1:
-            return
-        if db_type[0] == 'wts' or db_type[0] == 'wtb':
-            data = False
-            if (db_type[0] == 'wts' and 'wts' in message.content.lower())\
-                    or (db_type[0] == 'wtb' and 'wtb' in message.content.lower()):
-                bot_name = common_helper.get_bot_from_channel(message.channel.name)
-                if bot_name in ['mek', 'mekpreme'] and 'aio' in message.content.lower():
-                    bot_name = 'mekaio'
-                data = (
-                    bot_name,
-                    db_type[0],
-                    db_price,
-                    message.guild.name,
-                    datetime.now(),
-                    message.content,
-                    1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
-                    "{}#{}".format(message.author.name, message.author.discriminator)
-                )
-            if data:
-                print('---> SAVING DATA TO DB')
-                db = db_helper.mysql_get_mydb()
-                db_helper.insert_post(db, data)
+    final_type = db_type[0]
+
+    bot_name = common_helper.get_bot_from_channel(message.channel.name)
+    if bot_name in ['mek', 'mekpreme'] and 'aio' in message.content.lower():
+        bot_name = 'mekaio'
+
+    if db_price:
+        if (final_type == 'wts' and 'wts' in message.content.lower()) \
+                or (final_type == 'wtb' and 'wtb' in message.content.lower()):
+            data = (
+                bot_name,
+                final_type,
+                db_price,
+                message.guild.name,
+                datetime.now(),
+                message.content,
+                1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
+                "{}#{}".format(message.author.name, message.author.discriminator)
+            )
+    else:
+        if (final_type == 'wtro' and 'wtro' in message.content.lower()) \
+                or (final_type == 'wtr' and 'wtr' in message.content.lower()):
+            data = (
+                bot_name,
+                final_type,
+                db_price,
+                message.guild.name,
+                datetime.now(),
+                message.content,
+                1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
+                "{}#{}".format(message.author.name, message.author.discriminator)
+            )
+
+    if data:
+        print('---> SAVING DATA TO DB - {}'.format(final_type))
+        db = db_helper.mysql_get_mydb()
+        db_helper.insert_post(db, data)
 
 
 if __name__ == "__main__":
