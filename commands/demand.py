@@ -27,7 +27,7 @@ class Demand(BaseCommand):
 
         if not await errors_helper.check_days_param(days, message.channel):
             return
-        if not await errors_helper.check_type_param(type, message.channel):
+        if not await errors_helper.check_demand_type_param(type, message.channel):
             return
 
         db = db_helper.mysql_get_mydb()
@@ -36,16 +36,24 @@ class Demand(BaseCommand):
         if not await errors_helper.check_db_response(data, message.channel):
             return
 
+        MAX = 150
+        MID = 90
+        MIN = 40
+        if type in ['wtr', 'wtro']:
+            MAX = 100
+            MID = 60
+            MIN = 25
+
         index = 1
         stats_str = ''
         stats_str_scnd = ''
         for bot in data:
             daily_count = int(bot['count']) / int(days)
-            if daily_count >= 150:
+            if daily_count >= MAX:
                 status = ':fire:'
-            elif 150 > daily_count >= 90:
+            elif MAX > daily_count >= MID:
                 status = ':green_circle:'
-            elif 90 > daily_count >= 40:
+            elif MID > daily_count >= MIN:
                 status = ':orange_circle:'
             else:
                 status = ':red_circle:'

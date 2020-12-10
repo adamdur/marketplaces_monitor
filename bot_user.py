@@ -93,9 +93,9 @@ def insert_log(message, price_object):
     if bot_name in ['mek', 'mekpreme'] and 'aio' in message.content.lower():
         bot_name = 'mekaio'
 
-    if db_price:
-        if (final_type == 'wts' and 'wts' in message.content.lower()) \
-                or (final_type == 'wtb' and 'wtb' in message.content.lower()):
+    if (final_type == 'wts' and 'wts' in message.content.lower()) \
+            or (final_type == 'wtb' and 'wtb' in message.content.lower()):
+        if db_price:
             data = (
                 bot_name,
                 final_type,
@@ -106,19 +106,18 @@ def insert_log(message, price_object):
                 1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
                 "{}#{}".format(message.author.name, message.author.discriminator)
             )
-    else:
-        if (final_type == 'wtro' and 'wtro' in message.content.lower()) \
-                or (final_type == 'wtr' and 'wtr' in message.content.lower()):
-            data = (
-                bot_name,
-                final_type,
-                db_price,
-                message.guild.name,
-                datetime.now(),
-                message.content,
-                1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
-                "{}#{}".format(message.author.name, message.author.discriminator)
-            )
+    elif (final_type == 'wtro' and 'wtro' in message.content.lower()) \
+            or (final_type == 'wtr' and 'wtr' in message.content.lower()):
+        data = (
+            bot_name,
+            final_type,
+            db_price,
+            message.guild.name,
+            datetime.now(),
+            message.content,
+            1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
+            "{}#{}".format(message.author.name, message.author.discriminator)
+        )
 
     if data:
         print('---> SAVING DATA TO DB - {}'.format(final_type))

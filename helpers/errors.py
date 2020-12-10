@@ -1,6 +1,11 @@
 import settings
+import discord
 
 from helpers import setup_data as setup_data_helper
+
+
+def error_embed(title='Error', description='Unexpected error occurred, try again.'):
+    return discord.Embed(title=f':no_entry_sign: {title}', description=description, color=settings.ERROR_EMBED_COLOR)
 
 
 async def check_renewal_param(param, channel):
@@ -12,7 +17,22 @@ async def check_renewal_param(param, channel):
 
 async def check_type_param(param, channel):
     if param not in settings.ACTIVITY_CHANNEL_TYPES:
-        await channel.send(":x: Channel type not available. Only **[{}]** types allowed with activity command".format(", ".join(settings.ACTIVITY_CHANNEL_TYPES)))
+        embed = error_embed(
+            title='Unexpected channel type parameter',
+            description=f'Channel type __{param}__ not available. Only **[{", ".join(settings.ACTIVITY_CHANNEL_TYPES)}]** types allowed.'
+        )
+        await channel.send(embed=embed)
+        return False
+    return True
+
+
+async def check_demand_type_param(param, channel):
+    if param not in settings.DEMAND_CHANNEL_TYPES:
+        embed = error_embed(
+            title='Unexpected channel type parameter',
+            description=f'Channel type __{param}__ not available. Only **[{", ".join(settings.DEMAND_CHANNEL_TYPES)}]** types allowed.'
+        )
+        await channel.send(embed=embed)
         return False
     return True
 
