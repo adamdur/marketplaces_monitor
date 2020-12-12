@@ -21,5 +21,5 @@ async def get_default_channel_category(guild, create=True):
         category = get_channel_category(guild.categories, settings.DEFAULT_CHANNEL_CATEGORY)
 
     if not category and create:
-        return await guild.create_category(settings.DEFAULT_CHANNEL_CATEGORY)
+        category = await guild.create_category(settings.DEFAULT_CHANNEL_CATEGORY)
     return category

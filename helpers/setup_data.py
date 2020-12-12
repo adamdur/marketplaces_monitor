@@ -34,9 +34,9 @@ async def append_data(guild, group, value):
     data = await get_data(guild)
     key = list(value.keys())[0]
     value = list(value.values())[0]
-    if key not in data[group]:
-        data[group][key] = value
-        await save_data(guild, data)
+    # if key not in data[group]:
+    data[group][key] = value
+    await save_data(guild, data)
 
 
 async def get_guild_channels(guild):

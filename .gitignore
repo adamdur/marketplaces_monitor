@@ -136,4 +136,5 @@ settings.py
 setup
 botbroker
 tmp
+messages
 /notes.txt

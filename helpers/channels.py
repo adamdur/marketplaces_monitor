@@ -16,14 +16,14 @@ def get_channel_by_id(channels, channel_id):
 def get_public_permissions(guild):
     return {
         guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=False, add_reactions=False, attach_files=False, embed_links=False),
-        guild.me: discord.PermissionOverwrite(read_messages=True),
+        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True, add_reactions=True, attach_files=True, embed_links=True),
     }
 
 
 def get_public_permissions_with_messages(guild):
     return {
         guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True, add_reactions=True, attach_files=False, embed_links=False),
-        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, add_reactions=True),
+        guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True, add_reactions=True, attach_files=True, embed_links=True),
     }
 
 
@@ -50,31 +50,33 @@ def get_hidden_permissions(guild):
 async def get_default_setup_channel(guild, category, create=True):
     data = await setup_data_helper.get_data(guild)
     setup = data.get('setup')
+    channel = False
     if setup.get('setup_channel'):
         channel = get_channel_by_id(guild.channels, setup.get('setup_channel'))
-    else:
-        channel = get_channel(guild.channels, settings.DEFAULT_SETUP_CHANNEL)
+    if not channel:
+        channel = get_channel(category.channels, settings.DEFAULT_SETUP_CHANNEL)
 
     if not channel and create:
         overwrites = get_private_permissions(guild)
         channel = await guild.create_text_channel(settings.DEFAULT_SETUP_CHANNEL, category=category, overwrites=overwrites, position=0)
-        return await channel.send("Welcome! Start by using **{}help** command!".format(settings.COMMAND_PREFIX))
-
+        # @TODO welcome messages
+        await channel.send("Welcome! Start by using **{}help** command!".format(settings.COMMAND_PREFIX))
     return channel
 
 
 async def get_default_commands_channel(guild, category, create=True):
     data = await setup_data_helper.get_data(guild)
     setup = data.get('setup')
+    channel = False
     if setup.get('commands_channel'):
         channel = get_channel_by_id(guild.channels, setup.get('commands_channel'))
-    else:
-        channel = get_channel(guild.channels, settings.DEFAULT_COMMANDS_CHANNEL)
+    if not channel:
+        channel = get_channel(category.channels, settings.DEFAULT_COMMANDS_CHANNEL)
 
     if not channel and create:
         overwrites = get_public_permissions_with_messages(guild)
-        return await guild.create_text_channel(settings.DEFAULT_COMMANDS_CHANNEL, category=category, overwrites=overwrites, position=1)
-
+        channel = await guild.create_text_channel(settings.DEFAULT_COMMANDS_CHANNEL, category=category, overwrites=overwrites, position=1)
+        # @TODO welcome messages
     return channel
 
 

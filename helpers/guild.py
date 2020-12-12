@@ -25,7 +25,8 @@ async def get_moderator_role(guild, create=True):
         role = roles_helper.get_role(guild.roles, settings.MODERATOR_ROLE)
 
     if not role and create:
-        return await guild.create_role(name=settings.MODERATOR_ROLE)
+        perms = discord.Permissions(send_messages=True, read_messages=True, manage_channels=True)
+        role = await guild.create_role(name=settings.MODERATOR_ROLE, permissions=perms)
     return role
 
 
