@@ -14,8 +14,9 @@ class Activity_stats(BaseCommand):
     def __init__(self):
         description = "Shows activity and average price stats for selected type and selected days"
         params = []
-        params_optional = ['type', 'renewal', 'days']
-        super().__init__(description, params, params_optional)
+        params_optional = ['channel_type', 'renewal', 'days']
+        guide = f'{settings.COMMANDS_GUIDE_URL}#heading=h.3r5ce0z2lwqx'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
@@ -26,11 +27,11 @@ class Activity_stats(BaseCommand):
         renewal_param = common_helper.get_optional_param_by_index(params_optional, 1, "renewal")
         days = common_helper.get_optional_param_by_index(params_optional, 2, "1")
 
-        if not await errors_helper.check_days_param(days, message.channel):
+        if not await errors_helper.check_days_param(days, message.channel, guide=self.guide):
             return
-        if not await errors_helper.check_type_param(type, message.channel):
+        if not await errors_helper.check_type_param(type, message.channel, guide=self.guide):
             return
-        if not await errors_helper.check_renewal_param(renewal_param, message.channel):
+        if not await errors_helper.check_renewal_param(renewal_param, message.channel, guide=self.guide):
             return
 
         renewal = common_helper.get_renewal_param_value(renewal_param)

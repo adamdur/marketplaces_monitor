@@ -15,8 +15,9 @@ class Demand(BaseCommand):
     def __init__(self):
         description = "Shows bots sorted by number of posts at a given time"
         params = []
-        params_optional = ['type', 'days']
-        super().__init__(description, params, params_optional)
+        params_optional = ['channel_type', 'days']
+        guide = f'{settings.COMMANDS_GUIDE_URL}#heading=h.su070w5nhnc9'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
@@ -25,9 +26,9 @@ class Demand(BaseCommand):
         type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
         days = common_helper.get_optional_param_by_index(params_optional, 1, "1")
 
-        if not await errors_helper.check_days_param(days, message.channel):
+        if not await errors_helper.check_days_param(days, message.channel, guide=self.guide):
             return
-        if not await errors_helper.check_demand_type_param(type, message.channel):
+        if not await errors_helper.check_demand_type_param(type, message.channel, guide=self.guide):
             return
 
         db = db_helper.mysql_get_mydb()

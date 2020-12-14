@@ -24,7 +24,8 @@ class Pricing_stats(BaseCommand):
         description = "Shows bots pricing stats"
         params = []
         params_optional = ['renewal', 'days']
-        super().__init__(description, params, params_optional)
+        guide = f'{settings.COMMANDS_GUIDE_URL}#heading=h.h62bylwh8ylu'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
@@ -33,9 +34,9 @@ class Pricing_stats(BaseCommand):
         renewal_param = common_helper.get_optional_param_by_index(params_optional, 0, "renewal")
         days = common_helper.get_optional_param_by_index(params_optional, 1, "1")
 
-        if not await errors_helper.check_renewal_param(renewal_param, message.channel):
+        if not await errors_helper.check_renewal_param(renewal_param, message.channel, guide=self.guide):
             return
-        if not await errors_helper.check_days_param(days, message.channel):
+        if not await errors_helper.check_days_param(days, message.channel, guide=self.guide):
             return
 
         renewal = common_helper.get_renewal_param_value(renewal_param)

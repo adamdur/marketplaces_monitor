@@ -15,7 +15,8 @@ class Ping_add(BaseCommand):
         description = "Create a pings for specific channel"
         params = ['bot', 'channel_type', 'price', '@handle']
         params_optional = []
-        super().__init__(description, params, params_optional)
+        guide = f'{settings.SETUP_GUIDE_URL}#heading=h.diz420gzo012'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         if message.channel.name.lower() != settings.DEFAULT_SETUP_CHANNEL:
@@ -29,10 +30,10 @@ class Ping_add(BaseCommand):
         for handle in handle_param.split(','):
             if handle:
                 handles.append(handle)
-        if not await errors_helper.check_bot_param(bot, message.channel):
+        if not await errors_helper.check_bot_param(bot, message.channel, guide=self.guide):
             return
-        if type_param not in ['wts', 'wtb']:
-            return await message.channel.send(":x: Pings are only availabe to **[wts, wtb]** channel types.")
+        if not await errors_helper.check_type_param(type_param, message.channel, guide=self.guide):
+            return
         if not price_param.isdigit():
             return await message.channel.send(":x: Price parameter must be a number.")
         if not handles:

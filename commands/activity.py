@@ -14,8 +14,9 @@ class Activity(BaseCommand):
     def __init__(self):
         description = "Shows activity and average price of selected bot, type and selected days"
         params = ['bot']
-        params_optional = ['type', 'days']
-        super().__init__(description, params, params_optional)
+        params_optional = ['channel_type', 'days']
+        guide = f'{settings.COMMANDS_GUIDE_URL}#heading=h.hbt0417dv97p'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
@@ -26,11 +27,11 @@ class Activity(BaseCommand):
         type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
         days = common_helper.get_optional_param_by_index(params_optional, 1, "1")
 
-        if not await errors_helper.check_bot_param(bot, message.channel):
+        if not await errors_helper.check_bot_param(bot, message.channel, guide=self.guide):
             return
-        if not await errors_helper.check_days_param(days, message.channel):
+        if not await errors_helper.check_days_param(days, message.channel, guide=self.guide):
             return
-        if not await errors_helper.check_type_param(type, message.channel):
+        if not await errors_helper.check_type_param(type, message.channel, guide=self.guide):
             return
 
         db = db_helper.mysql_get_mydb()

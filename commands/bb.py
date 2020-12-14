@@ -16,7 +16,8 @@ class Bb(BaseCommand):
         description = "BotBroker command"
         params = ['bot']
         params_optional = ['renewal']
-        super().__init__(description, params, params_optional)
+        guide = f'{settings.COMMANDS_GUIDE_URL}#heading=h.6kgyhrr3b7o6'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         is_commands_channel = await channels_helper.is_commands_channel(message)
@@ -26,10 +27,10 @@ class Bb(BaseCommand):
         bot = common_helper.get_param_by_index(params, 0)
         renewal = common_helper.get_optional_param_by_index(params_optional, 0, "renewal")
 
-        bot = await errors_helper.check_bb_bot_param(bot, message.channel)
+        bot = await errors_helper.check_bb_bot_param(bot, message.channel, guide=self.guide)
         if not bot:
             return
-        if not await errors_helper.check_bb_renewal_param(renewal, message.channel):
+        if not await errors_helper.check_bb_renewal_param(renewal, message.channel, guide=self.guide):
             return
 
         waiting_message = await message.channel.send('Gathering data, please wait...')

@@ -15,18 +15,17 @@ class Remove(BaseCommand):
         description = "Remove monitor channel"
         params = ['bot', 'types']
         params_optional = []
-        super().__init__(description, params, params_optional)
+        guide = f'{settings.SETUP_GUIDE_URL}#heading=h.s8k5iq328drd'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         if message.channel.name.lower() != settings.DEFAULT_SETUP_CHANNEL:
             return
 
-        if params[0] not in settings.ALLOWED_BOTS:
-            return await message.channel.send(":x: Bot not available. Use command **{}available_bots** to see list of available bots".format(settings.COMMAND_PREFIX))
         bot = common_helper.get_param_by_index(params, 0)
         type_param = common_helper.get_param_by_index(params, 1)
 
-        if not await errors_helper.check_bot_param(bot, message.channel):
+        if not await errors_helper.check_bot_param(bot, message.channel, guide=self.guide):
             return
 
         if type_param == 'all':
@@ -36,7 +35,7 @@ class Remove(BaseCommand):
 
         category = await channel_categories_helper.get_default_channel_category(message.guild)
         for type in types:
-            if not await errors_helper.check_channel_type_param(type, message.channel):
+            if not await errors_helper.check_channel_type_param(type, message.channel, guide=self.guide):
                 continue
 
             channel_name = bot + "-" + type

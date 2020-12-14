@@ -59,8 +59,9 @@ async def get_default_setup_channel(guild, category, create=True):
     if not channel and create:
         overwrites = get_private_permissions(guild)
         channel = await guild.create_text_channel(settings.DEFAULT_SETUP_CHANNEL, category=category, overwrites=overwrites, position=0)
-        # @TODO welcome messages
-        await channel.send("Welcome! Start by using **{}help** command!".format(settings.COMMAND_PREFIX))
+        await channel.send(f"Welcome! Start by using **{settings.COMMAND_PREFIX}help** command.\n"
+                           f"Or use **{settings.COMMAND_PREFIX}commands** to see all available commands.\n"
+                           f"Enjoy!")
     return channel
 
 
@@ -76,7 +77,9 @@ async def get_default_commands_channel(guild, category, create=True):
     if not channel and create:
         overwrites = get_public_permissions_with_messages(guild)
         channel = await guild.create_text_channel(settings.DEFAULT_COMMANDS_CHANNEL, category=category, overwrites=overwrites, position=1)
-        # @TODO welcome messages
+        await channel.send(f"Welcome! Start by using **{settings.COMMAND_PREFIX}help** command.\n"
+                           f"Or use **{settings.COMMAND_PREFIX}commands** to see all available commands.\n"
+                           f"Enjoy!")
     return channel
 
 

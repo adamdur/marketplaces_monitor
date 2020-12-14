@@ -15,7 +15,8 @@ class Create(BaseCommand):
         description = "Create new monitor channel"
         params = ['bot', 'types']
         params_optional = []
-        super().__init__(description, params, params_optional)
+        guide = f'{settings.SETUP_GUIDE_URL}#heading=h.hbt0417dv97p'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         is_setup_channel = await channels_helper.is_setup_channel(message)
@@ -25,7 +26,7 @@ class Create(BaseCommand):
         bot = common_helper.get_param_by_index(params, 0)
         type_param = common_helper.get_param_by_index(params, 1)
 
-        if not await errors_helper.check_bot_param(bot, message.channel):
+        if not await errors_helper.check_bot_param(bot, message.channel, guide=self.guide):
             return
 
         if type_param == 'all':
@@ -34,7 +35,7 @@ class Create(BaseCommand):
             types = type_param.split(',')
 
         for type in types:
-            if not await errors_helper.check_channel_type_param(type, message.channel):
+            if not await errors_helper.check_channel_type_param(type, message.channel, guide=self.guide):
                 continue
 
             category = await channel_categories_helper.get_default_channel_category(message.guild)

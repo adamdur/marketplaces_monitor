@@ -1,5 +1,6 @@
-import settings
 import discord
+
+import settings
 from commands.base_command import BaseCommand
 
 from helpers import channels as channels_helper
@@ -7,10 +8,10 @@ from guides import setup_guides
 from guides import commands_guides
 
 
-class Help(BaseCommand):
+class Guide(BaseCommand):
 
     def __init__(self):
-        description = "Help message"
+        description = "Shows general guide"
         params = []
         params_optional = []
         super().__init__(description, params, params_optional)
@@ -19,10 +20,9 @@ class Help(BaseCommand):
         is_setup_channel = await channels_helper.is_setup_channel(message)
         is_command_channel = await channels_helper.is_commands_channel(message)
         if is_setup_channel:
-            msg = setup_guides.help_message
+            url = setup_guides.guide
         elif is_command_channel:
-            msg = commands_guides.help_message
+            url = commands_guides.guide
 
-        embed = discord.Embed(title="{}".format(settings.BOT_NAME), description=msg, color=settings.DEFAULT_EMBED_COLOR)
-
-        await message.channel.send(embed=embed)
+        embed = discord.Embed(title=f"{settings.BOT_NAME} GUIDE", description=f"[SHOW GUIDE]({url})", color=settings.DEFAULT_EMBED_COLOR)
+        return await message.channel.send(embed=embed)

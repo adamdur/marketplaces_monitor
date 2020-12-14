@@ -1,3 +1,5 @@
+import discord
+
 from commands.base_command import BaseCommand
 
 from commands import *
@@ -23,9 +25,18 @@ async def handle_command(command, args, message, bot_client):
         opt = []
     try:
         if args[0].lower() == 'help':
-            msg = message.author.mention + "\nParameters required:" + " ".join(f"*<{p}>*" for p in cmd_obj.params)
-            msg += "\nParameters optional:" + " ".join(f"*<{p}>*" for p in cmd_obj.params_optional)
-            return await message.channel.send(msg)
+            embed = discord.Embed(title=f"{cmd_obj.name.upper()} COMMAND PARAMETERS OVERVIEW", description="", color=settings.DEFAULT_EMBED_COLOR)
+            if cmd_obj.params:
+                embed.add_field(name="Parameters required:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params), inline=False)
+            if cmd_obj.params_optional:
+                embed.add_field(name="Parameters required:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params_optional), inline=False)
+            return await message.channel.send(embed=embed)
+        if args[0].lower() == 'guide':
+            if not cmd_obj.guide:
+                embed = discord.Embed(title=f"{cmd_obj.name.upper()} COMMAND GUIDE", description="Sorry, guide for selected command not available.", color=settings.DEFAULT_EMBED_COLOR)
+                return await message.channel.send(embed=embed)
+            embed = discord.Embed(title=f"{cmd_obj.name.upper()} COMMAND GUIDE", description=f"[SHOW GUIDE]({cmd_obj.guide})", color=settings.DEFAULT_EMBED_COLOR)
+            return await message.channel.send(embed=embed)
     except IndexError:
         pass
 

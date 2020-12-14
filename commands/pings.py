@@ -14,14 +14,15 @@ class Pings(BaseCommand):
         description = "Shows pings for specific channel"
         params = ['bot']
         params_optional = []
-        super().__init__(description, params, params_optional)
+        guide = f'{settings.SETUP_GUIDE_URL}#heading=h.fd6wtvry8lmr'
+        super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
         if message.channel.name.lower() != settings.DEFAULT_SETUP_CHANNEL:
             return
 
         bot = common_helper.get_param_by_index(params, 0)
-        if not await errors_helper.check_bot_param(bot, message.channel):
+        if not await errors_helper.check_bot_param(bot, message.channel, guide=self.guide):
             return
 
         channels = await setup_data_helper.get_guild_channels(message.guild)
