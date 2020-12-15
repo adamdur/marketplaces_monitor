@@ -29,7 +29,7 @@ async def handle_command(command, args, message, bot_client):
             if cmd_obj.params:
                 embed.add_field(name="Parameters required:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params), inline=False)
             if cmd_obj.params_optional:
-                embed.add_field(name="Parameters required:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params_optional), inline=False)
+                embed.add_field(name="Parameters optional:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params_optional), inline=False)
             return await message.channel.send(embed=embed)
         if args[0].lower() == 'guide':
             if not cmd_obj.guide:
