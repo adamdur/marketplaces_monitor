@@ -5,6 +5,7 @@ from helpers import setup_data as setup_data_helper
 
 
 def error_embed(title='Unexpected error', description='Unexpected error occurred, try again.', guide=None):
+    description += "\n\n>>> Try **.<command> help** to see help for specific command\n*(replace **<command>** with your command name)*"
     embed = discord.Embed(title=f':no_entry_sign: {title} :no_entry_sign:', description=description, color=settings.ERROR_EMBED_COLOR)
     if (guide):
         embed.add_field(name="\u200b", value=f"[SHOW GUIDE]({guide})", inline=False)
