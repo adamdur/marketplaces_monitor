@@ -204,7 +204,7 @@ def main(argv):
                                         if notify_with_handle:
                                             for handle in handles:
                                                 notify_handles += ' ' + handle
-                        print('---> GOING TO POST IN #{}'.format(final_channel))
+                        print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_id))
                         await channel_to_post.send(embed=embed, content=notify_handles)
 
     @client.event
