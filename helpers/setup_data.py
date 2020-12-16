@@ -35,7 +35,11 @@ async def append_data(guild, group, value):
     key = list(value.keys())[0]
     value = list(value.values())[0]
     # if key not in data[group]:
-    data[group][key] = value
+    try:
+        data[group][key] = value
+    except KeyError:
+        data[group] = {}
+        data[group][key] = value
     await save_data(guild, data)
 
 
@@ -45,6 +49,17 @@ async def get_guild_channels(guild):
 
     data = await get_data(guild)
     return data['channels']
+
+
+async def get_keyword_channels(channels):
+    kw_channels = {}
+    for idx, data in channels.items():
+        try:
+            if data['keywords'] and len(data['keywords']):
+                kw_channels[idx] = data
+        except KeyError:
+            continue
+    return kw_channels
 
 
 async def get_pings_for_channel(guild, channel):

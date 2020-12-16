@@ -2,6 +2,7 @@ import settings
 import discord
 
 from helpers import setup_data as setup_data_helper
+from helpers import channels as channels_helper
 
 
 def get_channel_category(categories, category_name):
@@ -21,5 +22,6 @@ async def get_default_channel_category(guild, create=True):
         category = get_channel_category(guild.categories, settings.DEFAULT_CHANNEL_CATEGORY)
 
     if not category and create:
-        category = await guild.create_category(settings.DEFAULT_CHANNEL_CATEGORY)
+        overwrites = channels_helper.get_public_permissions_with_messages(guild)
+        category = await guild.create_category(settings.DEFAULT_CHANNEL_CATEGORY, overwrites=overwrites)
     return category
