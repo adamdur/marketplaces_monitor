@@ -34,11 +34,13 @@ class Create(BaseCommand):
         else:
             types = type_param.split(',')
 
+        category = await channel_categories_helper.get_default_channel_category(message.guild)
+        permissions = category.overwrites
+
         for type in types:
             if not await errors_helper.check_channel_type_param(type, message.channel, guide=self.guide):
                 continue
 
-            category = await channel_categories_helper.get_default_channel_category(message.guild)
             channel_name = bot + "-" + type
             channel = channels_helper.get_channel(message.guild.channels, channel_name)
 
@@ -46,8 +48,7 @@ class Create(BaseCommand):
                 await message.channel.send(":exclamation: Channel <#{}> already exists".format(channel.id))
                 continue
 
-            overwrites = channels_helper.get_public_permissions(message.guild)
-            new_channel = await message.guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
+            new_channel = await message.guild.create_text_channel(channel_name, category=category, overwrites=permissions)
 
             if not new_channel:
                 await message.channel.send(":exclamation: Something went wrong while creating channel. Please try again")

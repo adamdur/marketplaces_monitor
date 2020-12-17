@@ -90,6 +90,39 @@ async def check_bot_param(param, channel, guide=None):
     return True
 
 
+async def check_channel_keywords(keywords_array, channel, guide=None):
+    keywords = keywords_array
+    length = len(keywords)
+    if length < 2:
+        embed = error_embed(
+            title='Insufficient number of main keywords',
+            description=f'You have {length} main keywords. Please add at least 2 main keywords',
+            guide=guide
+        )
+        await channel.send(embed=embed)
+        return False
+    if length > 5:
+        embed = error_embed(
+            title='Exceeded max number of main keywords',
+            description=f'Max number of main keywords is 5. Your number of main keywords is {length}.',
+            guide=guide
+        )
+        await channel.send(embed=embed)
+        return False
+
+    for keyword in keywords:
+        kw_options = keyword.split('|')
+        if len(kw_options) > 5:
+            embed = error_embed(
+                title='Exceeded max number of keyword aliases',
+                description=f'Max number of keyword aliases is 5. Aliases in **{kw_options}** exceed this limit',
+                guide=guide
+            )
+            await channel.send(embed=embed)
+            return False
+    return True
+
+
 async def check_db_response(data, channel, guide=None):
     if not data:
         embed = error_embed(guide=guide)

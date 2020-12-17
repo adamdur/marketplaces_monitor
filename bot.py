@@ -2,6 +2,9 @@ import getopt
 import sys
 import settings
 import discord
+import aiohttp
+import shlex
+from discord import Webhook, AsyncWebhookAdapter
 
 from handlers import message_handler
 from helpers import guild as guild_helper
@@ -73,11 +76,17 @@ def main(argv):
             if guild_id == str(guild.id):
                 del this.setup_data[index]
 
+    @client.event
+    async def on_disconnect():
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url(settings.LOG_WEBHOOK, adapter=AsyncWebhookAdapter(session))
+        await webhook.send('BOT DISCONNECTED!!!')
+
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
         if text.startswith(settings.COMMAND_PREFIX) and text != settings.COMMAND_PREFIX:
-            cmd_split = text[len(settings.COMMAND_PREFIX):].split()
+            cmd_split = shlex.split(text[len(settings.COMMAND_PREFIX):])
             if cmd_split[0].lower() in settings.ADMIN_COMMANDS:
                 if not [role for role in message.author.roles if role.name.lower() in settings.ALLOWED_ROLES]:
                     return await message.channel.send(':no_entry: ' + message.author.mention + ' You are not allowed to use this command! :no_entry:')
@@ -122,14 +131,13 @@ def main(argv):
             final_types = common_helper.get_channel_types(message_channel, message_content)
             if not final_types:
                 print('No type found: {}'.format(message_channel))
-                return False
 
             final_bot = common_helper.get_bot_from_channel(message_channel)
             if not final_bot:
                 print('Bot not found: {}'.format(message_channel))
-                return
+
             if final_bot in ['mek', 'mekpreme']:
-                if any(x in message.content.lower() for x in ['mekaio', 'aio']):
+                if any(x in message.content.lower() for x in ['aio']):
                     final_bot = 'mekaio'
 
             final_channels = []
@@ -150,6 +158,25 @@ def main(argv):
                 setup = await setup_data_helper.get_data_by_id(guild_id)
                 channels = setup['channels']
                 channel_names = list(channels.keys())
+
+                kw_channels = await setup_data_helper.get_keyword_channels(channels)
+                for idx, kw_channel in kw_channels.items():
+                    try:
+                        kws = kw_channel['keywords']
+                        _post = True
+                        for kw in kws:
+                            kw_options = kw.split('|')
+                            if not any(kw_option.lower() in message_content.lower() for kw_option in kw_options):
+                                _post = False
+                                break
+                        if not _post:
+                            continue
+                        if _post:
+                            kw_channel_to_post = channels_helper.get_channel_by_id(data[guild_id]['guild'].channels, kw_channel['id'])
+                            print('---> GOING TO POST IN KW CHANNEL #{}'.format(idx))
+                            await kw_channel_to_post.send(embed=embed)
+                    except KeyError:
+                        continue
 
                 for final_channel in final_channels:
                     if final_channel in channel_names:
@@ -177,7 +204,7 @@ def main(argv):
                                         if notify_with_handle:
                                             for handle in handles:
                                                 notify_handles += ' ' + handle
-                        print('---> GOING TO POST IN {}'.format(final_channel))
+                        print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_id))
                         await channel_to_post.send(embed=embed, content=notify_handles)
 
     @client.event

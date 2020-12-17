@@ -37,8 +37,8 @@ def main(argv):
     async def on_message(message):
         channel_name = message.channel.name
         if any(s in channel_name for s in settings.CHANNELS_IDENTIFIERS):
-            if any(negative in channel_name for negative in settings.CHANNELS_NEGATIVE_IDENTIFIERS):
-                return
+            # if any(negative in channel_name for negative in settings.CHANNELS_NEGATIVE_IDENTIFIERS):
+            #     return
 
             price_obj = common_helper.get_formatted_price(message)
             embed = build_embed(message, price_obj)
@@ -90,6 +90,8 @@ def insert_log(message, price_object):
     final_type = db_type[0]
 
     bot_name = common_helper.get_bot_from_channel(message.channel.name)
+    if not bot_name:
+        return
     if bot_name in ['mek', 'mekpreme'] and 'aio' in message.content.lower():
         bot_name = 'mekaio'
 
