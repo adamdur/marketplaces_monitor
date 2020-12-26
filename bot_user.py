@@ -106,7 +106,8 @@ def insert_log(message, price_object):
                 datetime.now(),
                 message.content,
                 1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
-                "{}#{}".format(message.author.name, message.author.discriminator)
+                f"{message.author.name}#{message.author.discriminator}",
+                f"{settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id})"
             )
     elif (final_type == 'wtro' and 'wtro' in message.content.lower()) \
             or (final_type == 'wtr' and 'wtr' in message.content.lower()):
@@ -118,7 +119,8 @@ def insert_log(message, price_object):
             datetime.now(),
             message.content,
             1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
-            "{}#{}".format(message.author.name, message.author.discriminator)
+            f"{message.author.name}#{message.author.discriminator}",
+            f"{settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id}"
         )
 
     if data:
