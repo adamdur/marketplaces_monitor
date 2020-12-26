@@ -107,7 +107,7 @@ def insert_log(message, price_object):
                 message.content,
                 1 if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else 0,
                 f"{message.author.name}#{message.author.discriminator}",
-                f"{settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id})"
+                f"{settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id}"
             )
     elif (final_type == 'wtro' and 'wtro' in message.content.lower()) \
             or (final_type == 'wtr' and 'wtr' in message.content.lower()):
