@@ -68,4 +68,7 @@ def create_line_graph(data, bot='', type='price'):
 
 def get_list_average(lst):
     lst = [x for x in lst if isinstance(x, numbers.Number)]
-    return sum(lst) / len(lst)
+    try:
+        return sum(lst) / len(lst)
+    except ZeroDivisionError:
+        return 0
