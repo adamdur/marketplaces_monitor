@@ -1,6 +1,9 @@
+import os
 import sys
 import schedule
 import time
+import settings
+import datetime
 from multiprocessing import Process
 
 from helpers import setup_data as setup_data_helper
@@ -11,6 +14,12 @@ this = sys.modules[__name__]
 
 def main():
     print('BB Bots updater running...')
+    date = datetime.datetime.now()
+    file = settings.LOGS_DIR + '/' + str(date.timestamp()) + '.txt'
+    if not os.path.isfile(file):
+        with open(file, mode='w') as f:
+            f.write(f"{date}  Running BB bots updater")
+
     schedule.every(30).minutes.do(bot_api_call)
     while True:
         schedule.run_pending()
