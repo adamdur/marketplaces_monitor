@@ -56,6 +56,10 @@ class Graph_pricing(BaseCommand):
         wtb_average_week = graph_helper.get_list_average(data['wtb'][-7:])
         wtb_average_day = round(data['wtb_day'], 2) if data['wtb_day'] else None
 
+        if not wts_average_all and not wts_average_week and not wts_average_day\
+                and not wtb_average_all and not wtb_average_week and not wtb_average_day:
+            return await waiting_message.edit(content=":exclamation: No sufficient data found for {}. Try again later...".format(bot.upper()))
+
         embed = discord.Embed(title="{}-day pricing graph for {} {}".format(settings.GRAPH_DATA_DAYS, bot.capitalize(), renewal_param.lower()), description="", color=settings.DEFAULT_EMBED_COLOR)
         embed.add_field(name="{}-day average (WTS):".format(settings.GRAPH_DATA_DAYS), value="${}".format(round(wts_average_all, 2)), inline=True)
         embed.add_field(name="{}-day average (WTB):".format(settings.GRAPH_DATA_DAYS), value="${}".format(round(wtb_average_all, 2)), inline=True)
