@@ -29,6 +29,8 @@ class Pings(BaseCommand):
         embed = discord.Embed(title="PINGS FOR {}".format(bot.upper()), description="", color=settings.DEFAULT_EMBED_COLOR)
 
         for channel, channel_data in channels.items():
+            if len(channel.split('-')) > 2:
+                continue
             bot_name, channel_type = channel.split('-')
             if bot_name == bot and channel_type in ['wts', 'wtb']:
                 channel_pings = channel_data['pings']
