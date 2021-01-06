@@ -1,4 +1,5 @@
 import discord
+from datetime import datetime
 
 from commands.base_command import BaseCommand
 from helpers import db as db_helper
@@ -22,7 +23,8 @@ async def handle_command(command, args, message, bot_client):
         f"{message.guild.name}",
         f"{message.guild.id}",
         f"{message.author.name}#{message.author.discriminator}",
-        f"{message.author.id}"
+        f"{message.author.id}",
+        datetime.now(),
     )
 
     cmd_obj = COMMAND_HANDLERS[command]

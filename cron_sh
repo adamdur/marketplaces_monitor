@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if ! pgrep -f 'bot_bb.py'
+then
+    dt=$(date '+%d/%m/%Y %H:%M:%S');
+    echo "$dt died" > /root/scripts/marketplaces_monitor/logs/bot_bb.out
+    tmux send-keys -t 'bot_bb' 'python3 /root/scripts/marketplaces_monitor/bot_bb.py' C-m & > /root/scripts/marketplaces_monitor/logs/bot_bb.out
+else
+    dt=$(date '+%d/%m/%Y %H:%M:%S');
+    echo "$dt running" > /root/scripts/marketplaces_monitor/logs/bot_bb.out
+fi
+
+if ! pgrep -f 'bot.py'
+then
+    dt=$(date '+%d/%m/%Y %H:%M:%S');
+    echo "$dt died" > /root/scripts/marketplaces_monitor/logs/bot.out
+    tmux send-keys -t 'bot' 'python3 /root/scripts/marketplaces_monitor/bot.py' C-m & > /root/scripts/marketplaces_monitor/logs/bot.out
+else
+    dt=$(date '+%d/%m/%Y %H:%M:%S');
+    echo "$dt running" > /root/scripts/marketplaces_monitor/logs/bot.out
+fi
