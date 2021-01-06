@@ -153,7 +153,8 @@ def get_activity_stats(db, renewal, type, days):
 
 def get_posts_stats(db, type, days):
     cursor = db.cursor(dictionary=True)
-    query = ("SELECT bot, COUNT(*) AS count FROM posts "
+    query = ("SELECT bot, COUNT(*) AS count, COUNT(DISTINCT user) unique_users "
+             "FROM posts "
              "WHERE bot != '0' "
              "AND type = %s "
              "AND created_at > %s "

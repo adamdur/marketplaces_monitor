@@ -48,6 +48,8 @@ class Demand(BaseCommand):
         index = 1
         stats_str = ''
         stats_str_scnd = ''
+        stats_str_thrd = ''
+        stats_str_frth = ''
         for bot in data:
             daily_count = int(bot['count']) / int(days)
             if daily_count >= MAX:
@@ -58,10 +60,15 @@ class Demand(BaseCommand):
                 status = ':orange_circle:'
             else:
                 status = ':red_circle:'
-            if index <= math.ceil(len(data) / 2):
-                stats_str += status + ' {0}. {1}\u2002|\u2002**{2} posts**\n'.format(index, bot['bot'].capitalize(), bot['count'])
+            msg = status + f" **{index}. {bot['bot'].capitalize()}\u2002|\u2002{bot['count']} posts**\n> {bot['unique_users']} unique users\n"
+            if index <= math.ceil(len(data) / 4):
+                stats_str += msg
+            elif math.ceil(len(data) / 4) <= index <= math.ceil(len(data) / 4) * 2:
+                stats_str_scnd += msg
+            elif math.ceil(len(data) / 4) <= index <= math.ceil(len(data) / 4) * 3:
+                stats_str_thrd += msg
             else:
-                stats_str_scnd += status + ' {0}. {1}\u2002|\u2002**{2} posts**\n'.format(index, bot['bot'].capitalize(), bot['count'])
+                stats_str_frth += msg
             index += 1
 
         days_str = common_helper.get_time_string_from_days(days)
@@ -70,5 +77,9 @@ class Demand(BaseCommand):
         embed = discord.Embed(title="{} POSTS STATS".format(type.upper()), description=description.format(type.upper(), days_str), color=settings.DEFAULT_EMBED_COLOR)
         embed.add_field(name="\u200b", value=stats_str, inline=True)
         embed.add_field(name="\u200b", value=stats_str_scnd, inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
+        embed.add_field(name="\u200b", value=stats_str_thrd, inline=True)
+        embed.add_field(name="\u200b", value=stats_str_frth, inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
         embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)
         await message.channel.send(embed=embed)
