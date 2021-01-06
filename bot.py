@@ -2,19 +2,19 @@ import getopt
 import sys
 import settings
 import discord
-import aiohttp
 import shlex
-from discord import Webhook, AsyncWebhookAdapter
 
 from handlers import message_handler
 from helpers import guild as guild_helper
 from helpers import common as common_helper
 from helpers import setup_data as setup_data_helper
 from helpers import channels as channels_helper
+from helpers import webhook as webhook_helper
 
 this = sys.modules[__name__]
 this.running = False
 this.setup_data = []
+this.TEST_MODE = False
 
 
 def main(argv):
@@ -27,6 +27,7 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-t':
             print('[USING TEST MODE]')
+            this.TEST_MODE = True
             token = settings.BOT_TEST_TOKEN
     client = discord.Client()
 
@@ -49,6 +50,7 @@ def main(argv):
                 await guild.leave()
 
         print("Everything set up... Watching marketplaces...")
+        await send_webhook("Bot running")
 
         # Load all events
         # print("Loading events...", flush=True)
@@ -78,9 +80,7 @@ def main(argv):
 
     @client.event
     async def on_disconnect():
-        async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url(settings.LOG_WEBHOOK, adapter=AsyncWebhookAdapter(session))
-        await webhook.send('BOT DISCONNECTED!!!')
+        await send_webhook("@here Bot disconnected")
 
     # The message handler for both new message and edits
     async def common_handle_message(message):
@@ -135,6 +135,8 @@ def main(argv):
             final_bot = common_helper.get_bot_from_channel(message_channel)
             if not final_bot:
                 print('Bot not found: {}'.format(message_channel))
+                if not any(negative in message_channel for negative in settings.CHANNELS_NEGATIVE_IDENTIFIERS):
+                    await send_webhook(f"@here \n Unknown bot channel found: **#{message_channel}**")
 
             if final_bot in ['mek', 'mekpreme']:
                 if any(x in message.content.lower() for x in ['aio']):
@@ -219,6 +221,10 @@ def main(argv):
     client.run(token)
 
 ###############################################################################
+
+
+async def send_webhook(message):
+    await webhook_helper.send_webhook(message, this.TEST_MODE)
 
 
 if __name__ == "__main__":
