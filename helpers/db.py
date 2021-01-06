@@ -39,8 +39,8 @@ def insert_post(db, data):
 def log_command(db, data):
     cursor = db.cursor()
     insert_query = (
-        "INSERT INTO logs_usage (command, server_name, server_id, user_name, user_id) "
-        "VALUES (%s, %s, %s, %s, %s)")
+        "INSERT INTO logs_usage (command, params, server_name, server_id, user_name, user_id) "
+        "VALUES (%s, %s, %s, %s, %s, %s)")
 
     cursor.execute(insert_query, data)
     log = cursor.lastrowid
