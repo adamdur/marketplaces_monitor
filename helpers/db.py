@@ -26,7 +26,8 @@ def mysql_get_mydb():
 def insert_post(db, data):
     cursor = db.cursor()
     insert_query = (
-        "INSERT INTO posts (bot, type, price, marketplace, created_at, content, is_lifetime, user, url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
+        "INSERT INTO posts (bot, type, price, marketplace, created_at, content, is_lifetime, user, user_id, url) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
 
     cursor.execute(insert_query, data)
     post = cursor.lastrowid
