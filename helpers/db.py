@@ -36,6 +36,20 @@ def insert_post(db, data):
     return post
 
 
+def log_command(db, data):
+    cursor = db.cursor()
+    insert_query = (
+        "INSERT INTO logs_usage (command, server_name, server_id, user_name, user_id) "
+        "VALUES (%s, %s, %s, %s, %s)")
+
+    cursor.execute(insert_query, data)
+    log = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return log
+
+
 def get_activity_from(db, bot, type, days):
     cursor = db.cursor(dictionary=True)
     end_query = ("SELECT AVG(price) AS average, COUNT(*) AS count, is_lifetime FROM posts "

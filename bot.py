@@ -89,7 +89,7 @@ def main(argv):
             cmd_split = shlex.split(text[len(settings.COMMAND_PREFIX):])
             if cmd_split[0].lower() in settings.ADMIN_COMMANDS:
                 if not [role for role in message.author.roles if role.name.lower() in settings.ALLOWED_ROLES]:
-                    return await message.channel.send(':no_entry: ' + message.author.mention + ' You are not allowed to use this command! :no_entry:')
+                    return
             try:
                 await message_handler.handle_command(cmd_split[0].lower(), cmd_split[1:], message, client)
             except:

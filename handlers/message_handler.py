@@ -1,6 +1,7 @@
 import discord
 
 from commands.base_command import BaseCommand
+from helpers import db as db_helper
 
 from commands import *
 
@@ -15,6 +16,13 @@ async def handle_command(command, args, message, bot_client):
         return
 
     print(f"{message.author.name}: {settings.COMMAND_PREFIX}{command} " + " ".join(args))
+    log_data = (
+        f"{settings.COMMAND_PREFIX}{command} " + " ".join(args),
+        f"{message.guild.name}",
+        f"{message.guild.id}",
+        f"{message.author.name}#{message.author.discriminator}",
+        f"{message.author.id}"
+    )
 
     cmd_obj = COMMAND_HANDLERS[command]
     try:
@@ -32,13 +40,16 @@ async def handle_command(command, args, message, bot_client):
                     embed.add_field(name="Parameters required:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params), inline=False)
                 if cmd_obj.params_optional:
                     embed.add_field(name="Parameters optional:", value=" ".join(f"*<{p}>*" for p in cmd_obj.params_optional), inline=False)
-                return await message.channel.send(embed=embed)
+                await message.channel.send(embed=embed)
+                return log_cmd(log_data)
         if args[0].lower() == 'guide':
             if not cmd_obj.guide:
                 embed = discord.Embed(title=f"{cmd_obj.name.upper()} COMMAND GUIDE", description="Sorry, guide for selected command not available.", color=settings.DEFAULT_EMBED_COLOR)
-                return await message.channel.send(embed=embed)
+                await message.channel.send(embed=embed)
+                return log_cmd(log_data)
             embed = discord.Embed(title=f"{cmd_obj.name.upper()} COMMAND GUIDE", description=f"[SHOW GUIDE]({cmd_obj.guide})", color=settings.DEFAULT_EMBED_COLOR)
-            return await message.channel.send(embed=embed)
+            await message.channel.send(embed=embed)
+            return log_cmd(log_data)
     except IndexError:
         pass
 
@@ -48,3 +59,9 @@ async def handle_command(command, args, message, bot_client):
         await message.channel.send(msg)
     else:
         await cmd_obj.handle(req, opt, message, bot_client)
+    log_cmd(log_data)
+
+
+def log_cmd(data):
+    db = db_helper.mysql_get_mydb()
+    db_helper.log_command(db, data)
