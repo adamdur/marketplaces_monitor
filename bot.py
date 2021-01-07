@@ -5,6 +5,7 @@ import discord
 import shlex
 
 from handlers import message_handler
+from handlers import message_handler_dm
 from helpers import guild as guild_helper
 from helpers import common as common_helper
 from helpers import setup_data as setup_data_helper
@@ -85,6 +86,14 @@ def main(argv):
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
+        if message.author.bot:
+            return
+        if not message.guild:
+            try:
+                return await message_handler_dm.handle_command(message, client)
+            except:
+                print("Error while handling DM message", flush=True)
+                raise
         if text.startswith(settings.COMMAND_PREFIX) and text != settings.COMMAND_PREFIX:
             cmd_split = shlex.split(text[len(settings.COMMAND_PREFIX):])
             if cmd_split[0].lower() in settings.ADMIN_COMMANDS:

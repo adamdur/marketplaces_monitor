@@ -398,3 +398,45 @@ def get_graph_data_demand(db, bot, renewal):
         'wts_day': wts_day,
         'wtb_day': wtb_day
     }
+
+
+def log_event(db, dict):
+    cursor = db.cursor()
+    insert_query = (
+        "INSERT INTO events (type, date, bot, description, logged_by) "
+        "VALUES (%s, %s, %s, %s, %s)")
+
+    try:
+        data = (
+            dict['event'],
+            dict['date'],
+            dict['bot'],
+            dict['description'],
+            dict['logged_by']
+        )
+    except IndexError:
+        return False
+
+    cursor.execute(insert_query, data)
+    log = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return log
+
+
+def get_event_logs(db, date):
+    cursor = db.cursor(dictionary=True)
+    query = (
+        "SELECT type, bot, description, logged_by, date FROM events "
+        "WHERE date = %s "
+        "ORDER BY type"
+    )
+
+    cursor.execute(query, (date,))
+    data = cursor.fetchall()
+    print(data)
+
+    db.commit()
+    db.close()
+    return data
