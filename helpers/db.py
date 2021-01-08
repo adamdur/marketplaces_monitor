@@ -332,7 +332,7 @@ def get_graph_data_pricing(db, bot, renewal):
 
 def get_graph_data_demand(db, bot, renewal):
     cursor = db.cursor(dictionary=True)
-    query_graph = ("SELECT type, COUNT(*) AS count, DATE(created_at) AS date FROM posts "
+    query_graph = ("SELECT type, COUNT(*) AS count, COUNT(DISTINCT user) count_users, DATE(created_at) AS date FROM posts "
                    "WHERE bot = %s "
                    "AND type IN ('wts', 'wtb') "
                    "AND is_lifetime = %s "
@@ -369,20 +369,28 @@ def get_graph_data_demand(db, bot, renewal):
 
     xlabels = []
     wts = []
+    wts_users = []
     wts_day = None
     wtb = []
+    wtb_users = []
     wtb_day = None
     for date in date_list:
         wts_value = None
+        wts_value_users = None
         wtb_value = None
+        wtb_value_users = None
         for row in data_graph:
             if row['date'] == date.date():
                 if row['type'] == 'wts':
                     wts_value = round(row['count'])
+                    wts_value_users = round(row['count_users'])
                 elif row['type'] == 'wtb':
                     wtb_value = round(row['count'])
+                    wtb_value_users = round(row['count_users'])
         wts.append(wts_value)
+        wts_users.append(wts_value_users)
         wtb.append(wtb_value)
+        wtb_users.append(wtb_value_users)
         xlabels.append(date.strftime("%Y/%m/%d"))
 
     for row in data_day:
@@ -394,7 +402,9 @@ def get_graph_data_demand(db, bot, renewal):
     return {
         'xlabels': xlabels,
         'wts': wts,
+        'wts_users': wts_users,
         'wtb': wtb,
+        'wtb_users': wtb_users,
         'wts_day': wts_day,
         'wtb_day': wtb_day
     }
