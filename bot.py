@@ -44,9 +44,16 @@ def main(argv):
             await client.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(name=settings.NOW_PLAYING))
 
         # Set the Base guild setup for each guild bot is in
+        message_file = f"{settings.BASE_DIR}/messages/info_message.txt"
+        message = await setup_data_helper.get_file_content(message_file)
+        open(message_file, "w").close()
         for guild in client.guilds:
             if int(guild.id) in settings.VERIFIED_GUILDS:
-                this.setup_data.append(await guild_helper.base_guild_setup(guild))
+                guild_data = await guild_helper.base_guild_setup(guild)
+                this.setup_data.append(guild_data)
+                commands_channel = next(iter(guild_data.values()))['commands_channel']
+                if commands_channel and message:
+                    await commands_channel.send(message)
             else:
                 await guild.leave()
 

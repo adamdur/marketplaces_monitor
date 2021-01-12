@@ -16,6 +16,14 @@ async def get_data(guild):
             return json.load(data)
 
 
+async def get_file_content(filepath):
+    if not os.path.isfile(filepath):
+        return False
+    else:
+        with open(filepath) as data:
+            return data.read()
+
+
 async def get_data_by_id(guild_id):
     file = settings.SETUP_DIR + '/' + str(guild_id) + '.json'
     if not os.path.isfile(file):

@@ -98,6 +98,47 @@ def get_activity_from(db, bot, type, days):
     return full_data
 
 
+def get_trading_activity(db, bot=None, is_lifetime=0):
+    cursor = db.cursor(dictionary=True)
+    query_str = "SELECT COUNT(DISTINCT user_id) AS count, AVG(price) AS price, type FROM posts "
+    query_str += "WHERE created_at > %s " \
+                 "AND created_at < %s " \
+                 "AND type IN ('wts', 'wtb') "
+    query_str += f"{'AND bot = %s ' if bot else ''}"
+    query_str += f"{'AND is_lifetime = %s ' if bot else ''}"
+    query_str += "GROUP BY type"
+
+    query_str2 = "SELECT COUNT(DISTINCT user_id) AS count, AVG(price) AS price, type FROM posts "
+    query_str2 += "WHERE created_at > %s " \
+                  "AND created_at < %s " \
+                  "AND type IN ('wts', 'wtb') "
+    query_str2 += f"{'AND bot = %s ' if bot else ''}"
+    query_str2 += f"{'AND is_lifetime = %s ' if bot else ''}"
+    query_str2 += "GROUP BY type"
+
+    now = datetime.datetime.now()
+    start = now - datetime.timedelta(days=1)
+    end = start - datetime.timedelta(days=1)
+
+    query_args = (start, now)
+    query_args2 = (end, start)
+    if bot:
+        query_args = query_args + (bot,) + (is_lifetime,)
+        query_args2 = query_args2 + (bot,) + (is_lifetime,)
+    cursor.execute(query_str, query_args)
+    data_current = cursor.fetchall()
+    cursor.execute(query_str2, query_args2)
+    data_prev = cursor.fetchall()
+
+    db.commit()
+    db.close()
+
+    return {
+        'current': data_current,
+        'prev': data_prev
+    }
+
+
 def get_activity_stats(db, renewal, type, days):
     cursor = db.cursor(dictionary=True)
     end_query = ("SELECT bot, AVG(price) AS average, COUNT(*) AS count FROM posts "
@@ -445,7 +486,6 @@ def get_event_logs(db, date):
 
     cursor.execute(query, (date,))
     data = cursor.fetchall()
-    print(data)
 
     db.commit()
     db.close()

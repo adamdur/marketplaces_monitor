@@ -198,6 +198,10 @@ def get_movement(value, value_past):
         return "N/A"
 
 
+def get_movement_clean(value, value_past):
+    return (value - value_past) / value_past * 100
+
+
 def get_time_string_from_days(days):
     if days == '1':
         days_str = '24 hours'
