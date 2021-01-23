@@ -490,3 +490,42 @@ def get_event_logs(db, date):
     db.commit()
     db.close()
     return data
+
+
+def get_gainers(db, type, renewal):
+    cursor = db.cursor(dictionary=True)
+    query_str = "SELECT COUNT(DISTINCT user_id) AS count, AVG(price) AS price, type, bot FROM posts "
+    query_str += "WHERE created_at > %s " \
+                 "AND created_at < %s " \
+                 "AND type IN ('wts', 'wtb') " \
+                 "AND bot != '0' "
+    query_str += "AND is_lifetime = %s "
+    query_str += "GROUP BY bot, type"
+
+    query_str2 = "SELECT COUNT(DISTINCT user_id) AS count, AVG(price) AS price, type, bot FROM posts "
+    query_str2 += "WHERE created_at > %s " \
+                  "AND created_at < %s " \
+                  "AND type IN ('wts', 'wtb') " \
+                  "AND bot != '0' "
+    query_str2 += "AND is_lifetime = %s "
+    query_str2 += "GROUP BY bot, type"
+
+    now = datetime.datetime.now()
+    start = now - datetime.timedelta(days=1)
+    end = start - datetime.timedelta(days=1)
+
+    query_args = (start, now, renewal)
+    query_args2 = (end, start, renewal)
+
+    cursor.execute(query_str, query_args)
+    data_current = cursor.fetchall()
+    cursor.execute(query_str2, query_args2)
+    data_prev = cursor.fetchall()
+
+    db.commit()
+    db.close()
+
+    return {
+        'current': data_current,
+        'prev': data_prev
+    }
