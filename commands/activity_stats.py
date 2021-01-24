@@ -19,10 +19,6 @@ class Activity_stats(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        is_commands_channel = await channels_helper.is_commands_channel(message)
-        if not is_commands_channel:
-            return
-
         type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
         renewal_param = common_helper.get_optional_param_by_index(params_optional, 1, "renewal")
         days = common_helper.get_optional_param_by_index(params_optional, 2, "1")
@@ -67,5 +63,6 @@ class Activity_stats(BaseCommand):
         embed = discord.Embed(title="{} BOTS {} ACTIVITY STATS".format(renewal_param.upper(), type.upper()), description=description, color=settings.DEFAULT_EMBED_COLOR)
         embed.add_field(name="Average price increase/decrease:\u2002\u2002", value=price_list_str, inline=True)
         embed.add_field(name="Average activity increase/decrease:", value=count_list_str, inline=True)
-        embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
         await message.channel.send(embed=embed)

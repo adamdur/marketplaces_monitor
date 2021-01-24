@@ -18,11 +18,12 @@ class Guide(BaseCommand):
 
     async def handle(self, params, params_optional, message, client):
         is_setup_channel = await channels_helper.is_setup_channel(message)
-        is_command_channel = await channels_helper.is_commands_channel(message)
         if is_setup_channel:
             url = setup_guides.guide
-        elif is_command_channel:
+        else:
             url = commands_guides.guide
 
         embed = discord.Embed(title=f"{settings.BOT_NAME} GUIDE", description=f"[SHOW GUIDE]({url})", color=settings.DEFAULT_EMBED_COLOR)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
         return await message.channel.send(embed=embed)

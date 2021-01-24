@@ -17,12 +17,13 @@ class Help(BaseCommand):
 
     async def handle(self, params, params_optional, message, client):
         is_setup_channel = await channels_helper.is_setup_channel(message)
-        is_command_channel = await channels_helper.is_commands_channel(message)
         if is_setup_channel:
             msg = setup_guides.help_message
-        elif is_command_channel:
+        else:
             msg = commands_guides.help_message
 
         embed = discord.Embed(title="{}".format(settings.BOT_NAME), description=msg, color=settings.DEFAULT_EMBED_COLOR)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
 
         await message.channel.send(embed=embed)

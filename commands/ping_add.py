@@ -19,7 +19,8 @@ class Ping_add(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        if message.channel.name.lower() != settings.DEFAULT_SETUP_CHANNEL:
+        is_setup_channel = await channels_helper.is_setup_channel(message)
+        if not is_setup_channel:
             return
 
         bot = common_helper.get_param_by_index(params, 0)

@@ -20,9 +20,6 @@ class Demand(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        is_commands_channel = await channels_helper.is_commands_channel(message)
-        if not is_commands_channel:
-            return
         type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
         days = common_helper.get_optional_param_by_index(params_optional, 1, "1")
 
@@ -81,5 +78,6 @@ class Demand(BaseCommand):
         embed.add_field(name="\u200b", value=stats_str_thrd, inline=True)
         embed.add_field(name="\u200b", value=stats_str_frth, inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=True)
-        embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
         await message.channel.send(embed=embed)

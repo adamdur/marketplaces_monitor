@@ -130,10 +130,16 @@ def main(argv):
             is_lifetime = ''
             remove_indexes = []
             for index, field in enumerate(embed_dict['fields']):
-                if field['name'] == 'Message content:':
-                    message_content = field['value']
-                elif field['name'] == 'Matched price:':
+                if field['name'] == 'Matched price:':
                     price_str = field['value']
+                elif field['name'] == 'Posted by:':
+                    message_user = field['value']
+                elif field['name'] == 'Posted in:':
+                    message_posted_in = field['value']
+                elif field['name'] == 'Message link:':
+                    message_link = field['value']
+                elif field['name'] == 'Message content:':
+                    message_content = field['value']
                 elif field['name'] == 'Price level:':
                     price_level = field['value']
                     remove_indexes.append(index)
@@ -141,8 +147,8 @@ def main(argv):
                     is_lifetime = field['value']
                     remove_indexes.append(index)
 
-            for remove_index in sorted(remove_indexes, key=int, reverse=True):
-                embed.remove_field(remove_index)
+            # for remove_index in sorted(remove_indexes, key=int, reverse=True):
+            #     embed.remove_field(remove_index)
 
             final_types = common_helper.get_channel_types(message_channel, message_content)
             if not final_types:
@@ -160,6 +166,7 @@ def main(argv):
 
             final_channels = []
             notify = False
+            message_data = None
             if final_bot and final_types:
                 for type in final_types:
                     final_channels.append("{}-{}".format(final_bot, type))
@@ -167,15 +174,25 @@ def main(argv):
                         if type in ['wts', 'wtb'] and int(price_level) == 1:
                             message_data = common_helper.build_status_message(final_bot, price_str, type, is_lifetime)
                             if message_data:
-                                embed.insert_field_at(5, name="Status:", value=message_data['message'], inline=False)
                                 if message_data['notify'] is True:
                                     notify = True
+            clean_embed = discord.Embed(
+                title="",
+                description=f"{message_content}\n\n"
+                            f"{'' if price_str == 'N/A' else price_str + ' | '}{message_link} | {message_user}\n"
+                            f"{message_data['message'] if message_data else ''}\n\n",
+                color=settings.DEFAULT_EMBED_COLOR
+            )
+            clean_embed.set_author(name=f"{embed.author.name} #{message_channel}", icon_url=embed.author.icon_url)
+            clean_embed.timestamp = message.created_at
 
             for data in this.setup_data:
                 guild_id = list(data)[0]
                 setup = await setup_data_helper.get_data_by_id(guild_id)
                 channels = setup['channels']
                 channel_names = list(channels.keys())
+                guild_data = guild_helper.get_guild_by_id(client.guilds, int(guild_id))
+                clean_embed.set_footer(text=f"[{guild_data.name}]", icon_url=guild_data.icon_url)
 
                 kw_channels = await setup_data_helper.get_keyword_channels(channels)
                 for idx, kw_channel in kw_channels.items():
@@ -192,7 +209,7 @@ def main(argv):
                         if _post:
                             kw_channel_to_post = channels_helper.get_channel_by_id(data[guild_id]['guild'].channels, kw_channel['id'])
                             print('---> GOING TO POST IN KW CHANNEL #{}'.format(idx))
-                            await kw_channel_to_post.send(embed=embed)
+                            await kw_channel_to_post.send(embed=clean_embed)
                     except KeyError:
                         continue
 
@@ -223,7 +240,8 @@ def main(argv):
                                             for handle in handles:
                                                 notify_handles += ' ' + handle
                         print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_id))
-                        await channel_to_post.send(embed=embed, content=notify_handles)
+                        # clean_embed.set_footer(text=f"[{notify_guild.name}]", icon_url=notify_guild.icon_url)
+                        await channel_to_post.send(embed=clean_embed, content=notify_handles)
 
     @client.event
     async def on_message(message):

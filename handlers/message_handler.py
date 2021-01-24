@@ -3,6 +3,7 @@ from datetime import datetime
 
 from commands.base_command import BaseCommand
 from helpers import db as db_helper
+from helpers import channels as channels_helper
 
 from commands import *
 
@@ -57,9 +58,16 @@ async def handle_command(command, args, message, bot_client):
         pass
 
     if cmd_obj.params and len(args) < len(cmd_obj.params):
-        msg = message.author.mention + " Insufficient parameters!\n" \
-                                       "Parameters required:" + " ".join(f"*<{p}>*" for p in cmd_obj.params)
-        await message.channel.send(msg)
+        if command in settings.ADMIN_COMMANDS:
+            is_setup_channel = await channels_helper.is_setup_channel(message)
+            if is_setup_channel:
+                msg = message.author.mention + " Insufficient parameters!\n" \
+                                               "Parameters required:" + " ".join(f"*<{p}>*" for p in cmd_obj.params)
+                return await message.channel.send(msg)
+        else:
+            msg = message.author.mention + " Insufficient parameters!\n" \
+                                           "Parameters required:" + " ".join(f"*<{p}>*" for p in cmd_obj.params)
+            await message.channel.send(msg)
     else:
         await cmd_obj.handle(req, opt, message, bot_client)
     log_cmd(log_data)

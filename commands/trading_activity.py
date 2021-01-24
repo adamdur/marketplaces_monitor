@@ -19,10 +19,6 @@ class Trading_activity(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        is_commands_channel = await channels_helper.is_commands_channel(message)
-        if not is_commands_channel:
-            return
-
         bot = common_helper.get_optional_param_by_index(params_optional, 0)
         renewal_param = common_helper.get_optional_param_by_index(params_optional, 1, "renewal")
 
@@ -108,7 +104,8 @@ class Trading_activity(BaseCommand):
         embed.add_field(name=f"**{sell_price_icon} SELL VOLUME ${round_price(wts_price)}**", value=f"{get_movement(round(sell_price_movement, 2))}", inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=True)
 
-        embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
 
         return await message.channel.send(embed=embed)
 

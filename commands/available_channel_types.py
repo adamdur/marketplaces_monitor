@@ -22,5 +22,6 @@ class Available_channel_types(BaseCommand):
 
         embed = discord.Embed(title="AVAILABLE CHANNEL TYPES", description="List of available channel types to monitor:", color=settings.DEFAULT_EMBED_COLOR)
         embed.add_field(name="\u200b", value=str1, inline=True)
-        embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
         await message.channel.send(embed=embed)

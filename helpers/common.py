@@ -173,7 +173,7 @@ def build_status_message(bot, price, type, renewal):
 
     return {
         'notify': notify,
-        'message': '{} Price is {:.2f}% {} average price (${:.0f}) from last 24 hours'.format(icon, percentage, trend, avg_price)
+        'message': '{} {:.2f}% {} average (${:.0f})'.format(icon, percentage, trend, avg_price)
     }
 
 

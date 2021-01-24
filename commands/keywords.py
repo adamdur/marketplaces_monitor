@@ -36,6 +36,8 @@ class Keywords(BaseCommand):
                 description=f'Channel #{channel_name} not found',
                 guide=self.guide
             )
+            error_embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+            error_embed.timestamp = message.created_at
             return await message.channel.send(embed=error_embed)
 
         if channel and int(channel.category_id) == int(category.id):
@@ -49,6 +51,8 @@ class Keywords(BaseCommand):
                     description=f'No keywords data found for channel #{channel_name}',
                     guide=self.guide
                 )
+                error_embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+                error_embed.timestamp = message.created_at
                 return await message.channel.send(embed=error_embed)
 
             if keywords:
@@ -63,4 +67,6 @@ class Keywords(BaseCommand):
                     kw_options = keyword.split('|')
                     embed.add_field(name=f'Keyword group {index}', value=f'[{",".join(kw_options)}]', inline=False)
                     index += 1
+                embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+                embed.timestamp = message.created_at
                 await message.channel.send(embed=embed)

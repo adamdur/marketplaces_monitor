@@ -6,6 +6,7 @@ from commands.base_command import BaseCommand
 from helpers import setup_data as setup_data_helper
 from helpers import common as common_helper
 from helpers import errors as errors_helper
+from helpers import channels as channels_helper
 
 
 class Pings(BaseCommand):
@@ -18,7 +19,8 @@ class Pings(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        if message.channel.name.lower() != settings.DEFAULT_SETUP_CHANNEL:
+        is_setup_channel = await channels_helper.is_setup_channel(message)
+        if not is_setup_channel:
             return
 
         bot = common_helper.get_param_by_index(params, 0)
@@ -27,6 +29,8 @@ class Pings(BaseCommand):
 
         channels = await setup_data_helper.get_guild_channels(message.guild)
         embed = discord.Embed(title="PINGS FOR {}".format(bot.upper()), description="", color=settings.DEFAULT_EMBED_COLOR)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
 
         for channel, channel_data in channels.items():
             if len(channel.split('-')) > 2:

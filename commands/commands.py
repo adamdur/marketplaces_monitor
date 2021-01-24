@@ -16,17 +16,18 @@ class Commands(BaseCommand):
     async def handle(self, params, params_optional, message, client):
         from handlers.message_handler import COMMAND_HANDLERS
         is_setup_channel = await channels_helper.is_setup_channel(message)
-        is_command_channel = await channels_helper.is_commands_channel(message)
         embed = discord.Embed(title="List of available commands", description="", color=settings.DEFAULT_EMBED_COLOR)
         if is_setup_channel:
             embed = build_embed(embed, COMMAND_HANDLERS, 'setup')
-        elif is_command_channel:
+        else:
             embed = build_embed(embed, COMMAND_HANDLERS, 'command')
 
         embed.add_field(name="\u200b", value="**HELP COMMANDS**", inline=False)
         embed.add_field(name=f"{settings.COMMAND_PREFIX}help", value='Shows help message', inline=False)
         embed.add_field(name=f"{settings.COMMAND_PREFIX}guide", value='Shows general guide', inline=False)
         embed.add_field(name=f"{settings.COMMAND_PREFIX}commands", value='Shows available commands', inline=False)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
 
         await message.channel.send(embed=embed)
 

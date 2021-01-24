@@ -37,5 +37,6 @@ class Available_bots_bb(BaseCommand):
         embed.add_field(name="\u200b", value=str1, inline=True)
         embed.add_field(name="\u200b", value=str2, inline=True)
         embed.add_field(name="\u200b", value=str3, inline=True)
-        embed.add_field(name="\u200b", value="[{}]({})".format(settings.BOT_NAME, settings.BOT_URL), inline=False)
+        embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
         await message.channel.send(embed=embed)
