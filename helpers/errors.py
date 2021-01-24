@@ -42,6 +42,19 @@ async def check_type_param(param, channel, guide=None):
     return True
 
 
+async def check_timeframe_param(param, channel, guide=None):
+    if param not in ['d', 'w', 'm']:
+        embed = error_embed(
+            title='Unexpected timeframe parameter',
+            description=f"Timeframe __{param}__ not available. Only **[{', '.join(['d', 'w', 'm'])}]** types allowed.\n"
+                        f"d = day, w = week, m = month",
+            guide=guide
+        )
+        await channel.send(embed=embed)
+        return False
+    return True
+
+
 async def check_demand_type_param(param, channel, guide=None):
     if param not in settings.DEMAND_CHANNEL_TYPES:
         embed = error_embed(

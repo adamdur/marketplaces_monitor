@@ -241,3 +241,14 @@ def get_dict_value_by_index(dct, index):
     except KeyError:
         return False
     return value
+
+
+def get_timeframe_days(timeframe):
+    if timeframe == 'd':
+        return 1
+    elif timeframe == 'w':
+        return 7
+    elif timeframe == 'm':
+        return 30
+    else:
+        return 1

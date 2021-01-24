@@ -13,18 +13,21 @@ class Losers(BaseCommand):
     def __init__(self):
         description = "Shows list of top price and demand losers"
         params = []
-        params_optional = ['buy_sell', 'renewal']
+        params_optional = ['timeframe', 'buy_sell', 'renewal']
         guide = f'{settings.COMMANDS_GUIDE_URL}#heading=h.hbt0417dv97p'
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        type = common_helper.get_optional_param_by_index(params_optional, 0, "wtb")
-        renewal_param = common_helper.get_optional_param_by_index(params_optional, 1, "renewal")
+        timeframe = common_helper.get_optional_param_by_index(params_optional, 0, "d")
+        type = common_helper.get_optional_param_by_index(params_optional, 1, "wtb")
+        renewal_param = common_helper.get_optional_param_by_index(params_optional, 2, "renewal")
         if type == "wtb":
             type_opposite = "wts"
         elif type == "wts":
             type_opposite = "wtb"
 
+        if not await errors_helper.check_timeframe_param(timeframe, message.channel, guide=self.guide):
+            return
         if not await errors_helper.check_type_param(type, message.channel, guide=self.guide):
             return
         if not await errors_helper.check_renewal_param(renewal_param, message.channel, guide=self.guide):
@@ -34,7 +37,7 @@ class Losers(BaseCommand):
         waiting_message = await message.channel.send('Gathering data, please wait...')
 
         db = db_helper.mysql_get_mydb()
-        data = db_helper.get_gainers(db, type, renewal)
+        data = db_helper.get_gainers(db, timeframe, type, renewal)
 
         if not await errors_helper.check_db_response(data, message.channel):
             return await waiting_message.delete()

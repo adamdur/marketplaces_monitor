@@ -2,6 +2,8 @@ import settings
 import mysql.connector as mysql
 import datetime
 
+from helpers import common as common_helper
+
 
 def mysql_get_mydb():
     try:
@@ -492,7 +494,7 @@ def get_event_logs(db, date):
     return data
 
 
-def get_gainers(db, type, renewal):
+def get_gainers(db, timeframe, type, renewal):
     cursor = db.cursor(dictionary=True)
     query_str = "SELECT COUNT(DISTINCT user_id) AS count, AVG(price) AS price, type, bot FROM posts "
     query_str += "WHERE created_at > %s " \
@@ -510,9 +512,11 @@ def get_gainers(db, type, renewal):
     query_str2 += "AND is_lifetime = %s "
     query_str2 += "GROUP BY bot, type"
 
+    timeframe_days = common_helper.get_timeframe_days(timeframe)
+
     now = datetime.datetime.now()
     start = now - datetime.timedelta(days=1)
-    end = start - datetime.timedelta(days=1)
+    end = start - datetime.timedelta(days=timeframe_days)
 
     query_args = (start, now, renewal)
     query_args2 = (end, start, renewal)
