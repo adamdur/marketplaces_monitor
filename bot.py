@@ -88,7 +88,8 @@ def main(argv):
 
     @client.event
     async def on_disconnect():
-        await send_webhook("@here Bot disconnected")
+        print("Bot disconnected")
+        # await send_webhook("@here Bot disconnected")
 
     # The message handler for both new message and edits
     async def common_handle_message(message):
