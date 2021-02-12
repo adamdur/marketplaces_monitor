@@ -33,4 +33,7 @@ class Bot(BaseCommand):
             await message.channel.send(embed=embed)
             return
 
+        embed.set_footer(text=f"{message.guild.name}", icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
+
         await message.channel.send(embed=embed)

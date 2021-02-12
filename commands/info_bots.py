@@ -37,5 +37,7 @@ class Info_bots(BaseCommand):
             bot_str += f"{i}. {bot['bot']} \n"
             i += 1
         embed.add_field(name="\u200b", value=f"{bot_str}", inline=False)
+        embed.set_footer(text=f"{message.guild.name}", icon_url=message.guild.icon_url)
+        embed.timestamp = message.created_at
 
         await message.channel.send(embed=embed)
