@@ -533,3 +533,41 @@ def get_gainers(db, timeframe, type, renewal):
         'current': data_current,
         'prev': data_prev
     }
+
+
+def get_info_bots(db, bot):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT bot, message_id, channel_id FROM bot_info"
+    if bot:
+        query += " WHERE bot = %s"
+    query += " ORDER BY bot"
+    if bot:
+        cursor.execute(query, (bot,))
+    else:
+        cursor.execute(query)
+    if bot:
+        data = cursor.fetchone()
+    else:
+        data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def add_info(db, bot, message_id, channel_id=False):
+    if not bot or not message_id:
+        return False
+    if not channel_id:
+        channel_id = settings.MACHETE_SERVER_GUIDES_CHANNEL
+    cursor = db.cursor()
+    insert_query = (
+        "INSERT INTO bot_info (bot, message_id, channel_id) "
+        "VALUES (%s, %s, %s)")
+
+    cursor.execute(insert_query, (bot, message_id, channel_id))
+    info = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return info

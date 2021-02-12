@@ -2,6 +2,7 @@ import settings
 import discord
 
 from helpers import setup_data as setup_data_helper
+from helpers import db as db_helper
 
 
 def error_embed(title='Unexpected error', description='Unexpected error occurred, try again.', guide=None):
@@ -182,3 +183,17 @@ async def check_bb_renewal_param(param, channel, guide=None):
         await channel.send(embed=embed)
         return False
     return True
+
+
+async def check_info_bot(param, channel, guide=None):
+    db = db_helper.mysql_get_mydb()
+    bot_exists = db_helper.get_info_bots(db, param)
+    if not bot_exists:
+        embed = error_embed(
+            title='Bot guide not found',
+            description=f'Use command **{settings.COMMAND_PREFIX}info_bots** to see available bot guides.',
+            guide=guide
+        )
+        await channel.send(embed=embed)
+        return False
+    return bot_exists
