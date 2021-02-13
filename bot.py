@@ -129,7 +129,6 @@ def main(argv):
                     marketplace = field['value']
                     embed.remove_field(index)
 
-            embed.set_footer(text=f"[{message.guild.name}]", icon_url=message.guild.icon_url)
             embed.timestamp = message.created_at
 
             db = db_helper.mysql_get_mydb()
@@ -138,6 +137,7 @@ def main(argv):
                 try:
                     guild = guild_helper.get_guild_by_id(client.guilds, int(monitor['guild_id']))
                     channel = guild.get_channel(int(monitor['channel_id']))
+                    embed.set_footer(text=f"[{guild.name}]", icon_url=guild.icon_url)
                     await channel.send(embed=embed)
                 except:
                     print(f"UNABLE TO POST TICKET INTO CHANNEL {monitor['channel_id']} IN GUILD {monitor['guild_id']}")

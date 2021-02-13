@@ -51,7 +51,8 @@ def main(argv):
             insert_log(message, price_obj)
         elif 'ticket' in channel_name.lower():
             ticket_channel = client.get_channel(settings.DEFAULT_TICKET_WATCHER_CHANNEL)
-            ticket_command = message.content.split()
+            content = message.content.lower()
+            ticket_command = content.split()
             if ticket_command and 'new' in ticket_command[0]:
                 embed = build_embed_ticket(message, ticket_command)
                 await ticket_channel.send(embed=embed)
