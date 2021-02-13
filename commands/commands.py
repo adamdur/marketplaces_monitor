@@ -19,7 +19,7 @@ class Commands(BaseCommand):
         embed = discord.Embed(title="List of available commands", description="", color=settings.DEFAULT_EMBED_COLOR)
         if is_setup_channel:
             embed = build_embed(embed, COMMAND_HANDLERS, 'setup')
-        elif message.guild.id == settings.MACHETE_SERVER:
+        elif message.guild.id in settings.MACHETE_SERVER:
             embed = build_embed(embed, COMMAND_HANDLERS, 'machete')
         else:
             embed = build_embed(embed, COMMAND_HANDLERS, 'command')
@@ -36,7 +36,7 @@ class Commands(BaseCommand):
 
 def build_embed(embed, handlers, ctype):
     for cmd in sorted(handlers.items()):
-        if cmd[1].name.lower() not in settings.PRIVATE_COMMANDS:
+        if cmd[1].name.lower() not in settings.PRIVATE_COMMANDS and cmd[1].name.lower() not in settings.MACHETE_ADDITIONAL_COMMANDS:
             if ctype == 'setup':
                 if cmd[1].name.lower() in settings.ADMIN_COMMANDS and cmd[1].name.lower() not in settings.COMMON_COMMANDS:
                     command = "**{}{}**".format(settings.COMMAND_PREFIX, cmd[1].name)

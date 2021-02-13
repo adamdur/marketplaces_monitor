@@ -16,7 +16,7 @@ class Bot(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        if not message.guild.id == settings.MACHETE_SERVER:
+        if message.guild.id not in settings.MACHETE_SERVER:
             return
 
         bot = common_helper.get_param_by_index(params, 0)

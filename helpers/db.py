@@ -39,6 +39,20 @@ def insert_post(db, data):
     return post
 
 
+def insert_post_ticket(db, data):
+    cursor = db.cursor()
+    insert_query = (
+        "INSERT INTO tickets (params, guild_id, guild_name, content, user, user_id, url, created_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+
+    cursor.execute(insert_query, data)
+    post = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return post
+
+
 def log_command(db, data):
     cursor = db.cursor()
     insert_query = (
@@ -571,3 +585,63 @@ def add_info(db, bot, message_id, channel_id=False):
     db.commit()
     db.close()
     return info
+
+
+def create_ticket_monitor(db, marketplace, guild_id, channel_id):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT id FROM ticket_monitors " \
+            "WHERE marketplace = %s " \
+            "AND guild_id = %s " \
+            "AND channel_id = %s "
+    cursor.execute(query, (marketplace, guild_id, channel_id))
+    exists = cursor.fetchone()
+
+    if exists:
+        return False
+
+    insert_query = (
+        "INSERT INTO ticket_monitors (marketplace, guild_id, channel_id) "
+        "VALUES (%s, %s, %s)")
+    cursor.execute(insert_query, (marketplace, guild_id, channel_id))
+    inserted = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return inserted
+
+
+def get_ticket_monitors(db, marketplace):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT * FROM ticket_monitors " \
+            "WHERE marketplace = %s "
+    cursor.execute(query, (marketplace,))
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def destroy_ticket_monitor(db, guild_id, channel_id):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT id FROM ticket_monitors " \
+            "WHERE guild_id = %s " \
+            "AND channel_id = %s "
+    cursor.execute(query, (guild_id, channel_id))
+    monitors = cursor.fetchall()
+
+    if not monitors:
+        return False
+
+    ids = []
+    for monitor in monitors:
+        ids.append(str(monitor['id']))
+
+    query_string = f"DELETE FROM ticket_monitors WHERE id IN ({','.join(['%s'] * (len(ids)))})"
+    cursor.execute(query_string, ids)
+
+    deleted = cursor.rowcount
+
+    db.commit()
+    db.close()
+    return deleted

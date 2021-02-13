@@ -11,6 +11,7 @@ from helpers import common as common_helper
 from helpers import setup_data as setup_data_helper
 from helpers import channels as channels_helper
 from helpers import webhook as webhook_helper
+from helpers import db as db_helper
 
 this = sys.modules[__name__]
 this.running = False
@@ -114,6 +115,33 @@ def main(argv):
                 raise
 
     async def common_watcher_handle_message(message):
+        if message.channel.id == settings.DEFAULT_TICKET_WATCHER_CHANNEL:
+            if not message.embeds:
+                return
+            embed = message.embeds[0]
+            if not embed:
+                return
+            embed_dict = embed.to_dict()
+
+            marketplace = ''
+            for index, field in enumerate(embed_dict['fields']):
+                if field['name'] == 'Server:':
+                    marketplace = field['value']
+                    embed.remove_field(index)
+
+            embed.set_footer(text=f"[{message.guild.name}]", icon_url=message.guild.icon_url)
+            embed.timestamp = message.created_at
+
+            db = db_helper.mysql_get_mydb()
+            monitor_channels = db_helper.get_ticket_monitors(db, marketplace)
+            for monitor in monitor_channels:
+                try:
+                    guild = guild_helper.get_guild_by_id(client.guilds, int(monitor['guild_id']))
+                    channel = guild.get_channel(int(monitor['channel_id']))
+                    await channel.send(embed=embed)
+                except:
+                    print(f"UNABLE TO POST TICKET INTO CHANNEL {monitor['channel_id']} IN GUILD {monitor['guild_id']}")
+
         if message.channel.id == settings.DEFAULT_WATCHER_CHANNEL:
             if not message.embeds:
                 return
