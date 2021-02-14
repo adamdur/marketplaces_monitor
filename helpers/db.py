@@ -211,14 +211,14 @@ def get_activity_stats(db, renewal, type, days):
 
 def get_posts_stats(db, type, days):
     cursor = db.cursor(dictionary=True)
-    query = ("SELECT bot, COUNT(*) AS count, COUNT(DISTINCT user) unique_users "
+    query = ("SELECT bot, COUNT(*) AS count, COUNT(DISTINCT user_id) unique_users "
              "FROM posts "
              "WHERE bot != '0' "
              "AND type = %s "
              "AND created_at > %s "
              "AND created_at < %s "
              "GROUP BY bot "
-             "ORDER BY count DESC ")
+             "ORDER BY unique_users DESC ")
     now = datetime.datetime.now()
     last_day = now - datetime.timedelta(days=int(days))
 

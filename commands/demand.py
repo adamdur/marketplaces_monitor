@@ -34,13 +34,13 @@ class Demand(BaseCommand):
         if not await errors_helper.check_db_response(data, message.channel):
             return
 
-        MAX = 150
-        MID = 90
-        MIN = 40
+        MAX = 70
+        MID = 35
+        MIN = 15
         if type in ['wtr', 'wtro']:
-            MAX = 100
-            MID = 60
-            MIN = 25
+            MAX = 55
+            MID = 25
+            MIN = 10
 
         index = 1
         stats_str = ''
@@ -48,7 +48,7 @@ class Demand(BaseCommand):
         stats_str_thrd = ''
         stats_str_frth = ''
         for bot in data:
-            daily_count = int(bot['count']) / int(days)
+            daily_count = int(bot['unique_users']) / int(days)
             if daily_count >= MAX:
                 status = ':fire:'
             elif MAX > daily_count >= MID:
@@ -57,7 +57,7 @@ class Demand(BaseCommand):
                 status = ':orange_circle:'
             else:
                 status = ':red_circle:'
-            msg = status + f" **{index}. {bot['bot'].capitalize()}\u2002|\u2002{bot['count']} posts**\n> {bot['unique_users']} unique users\n"
+            msg = status + f" **{index}. {bot['bot'].capitalize()}\u2002|\u2002{bot['unique_users']} users**\n> {bot['count']} total posts\n"
             if index <= math.ceil(len(data) / 4):
                 stats_str += msg
             elif math.ceil(len(data) / 4) <= index <= math.ceil(len(data) / 4) * 2:
