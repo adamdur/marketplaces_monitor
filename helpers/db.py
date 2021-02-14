@@ -526,6 +526,14 @@ def get_gainers(db, timeframe, type, renewal):
     query_str2 += "AND is_lifetime = %s "
     query_str2 += "GROUP BY bot, type"
 
+    query_str3 = "SELECT COUNT(DISTINCT user_id) AS count, AVG(price) AS price, type, bot, DATE(created_at) date FROM posts "
+    query_str3 += "WHERE created_at > %s " \
+                  "AND created_at < %s " \
+                  "AND type IN ('wts', 'wtb') " \
+                  "AND bot != '0' "
+    query_str3 += "AND is_lifetime = %s "
+    query_str3 += "GROUP BY bot, type, date"
+
     timeframe_days = common_helper.get_timeframe_days(timeframe)
 
     now = datetime.datetime.now()
@@ -540,6 +548,19 @@ def get_gainers(db, timeframe, type, renewal):
     cursor.execute(query_str2, query_args2)
     data_prev = cursor.fetchall()
 
+    if timeframe_days > 1:
+        cursor.execute(query_str3, query_args2)
+        data_prev_new = cursor.fetchall()
+        new_data_prev = {}
+        for new_prev in data_prev_new:
+            try:
+                new_data_prev[f"{new_prev['bot']}_{new_prev['type']}"] = new_data_prev[f"{new_prev['bot']}_{new_prev['type']}"] + new_prev['count']
+            except KeyError:
+                new_data_prev[f"{new_prev['bot']}_{new_prev['type']}"] = new_prev['count']
+        i = 0
+        for prev in data_prev:
+            data_prev[i]['count'] = round(new_data_prev[f"{prev['bot']}_{prev['type']}"] / timeframe_days)
+            i += 1
     db.commit()
     db.close()
 

@@ -73,14 +73,11 @@ class Gainers(BaseCommand):
                 if curr_type < 10:
                     continue
                 prev_type = d[f"prev_{type}"]
+                if prev_type < 5:
+                    continue
                 curr_type_opposite = d[f"current_{type_opposite}"]
                 prev_type_opposite = d[f"prev_{type_opposite}"]
-                total = curr_type + curr_type_opposite
-                total_prev = prev_type + prev_type_opposite
-
-                percentage = get_percentage(curr_type, total)
-                percentage_prev = get_percentage(prev_type, total_prev)
-                movement = get_movement_int(percentage, percentage_prev)
+                movement = round((curr_type - prev_type) / prev_type * 100, 2)
             except KeyError:
                 continue
 
@@ -94,12 +91,7 @@ class Gainers(BaseCommand):
                 prev_type = d[f"prev_{type}"]
                 curr_type_opposite = d[f"current_{type_opposite}"]
                 prev_type_opposite = d[f"prev_{type_opposite}"]
-                total = curr_type + curr_type_opposite
-                total_prev = prev_type + prev_type_opposite
-
-                percentage = get_percentage(curr_type, total)
-                percentage_prev = get_percentage(prev_type, total_prev)
-                movement = get_movement_int(percentage, percentage_prev)
+                movement = round((curr_type - prev_type) / prev_type * 100, 2)
             except KeyError:
                 continue
 
@@ -112,8 +104,16 @@ class Gainers(BaseCommand):
         demand_data_sorted = sorted(filtered_demand_data.items(), key=keyfunc, reverse=True)
         price_data_sorted = sorted(filtered_price_data.items(), key=keyfunc, reverse=True)
 
+        period = ''
+        if timeframe == 'd':
+            period = 'DAILY'
+        elif timeframe == 'w':
+            period = 'WEEKLY'
+        elif timeframe == 'm':
+            period = 'MONTHLY'
+
         embed = discord.Embed(
-            title=f"LIST OF TOP GAINERS IN {type.upper()} DEMAND & PRICING",
+            title=f"LIST OF TOP {period} GAINERS IN {type.upper()} DEMAND & PRICING",
             description="",
             color=settings.DEFAULT_EMBED_COLOR
         )
@@ -121,7 +121,7 @@ class Gainers(BaseCommand):
         idx = 1
         for item in demand_data_sorted[:9]:
             bot = item[0]
-            movement_text = get_movement_text(item[1]["movement"], item[1]["curr"])
+            movement_text = get_movement_text(item[1]["movement"], item[1]["curr"], item[1]["prev"])
             embed.add_field(name=f"{idx}. {bot.capitalize()}", value=f"{movement_text}", inline=True)
             idx += 1
 
@@ -129,7 +129,7 @@ class Gainers(BaseCommand):
         idx = 1
         for item in price_data_sorted[:9]:
             bot = item[0]
-            movement_text = get_movement_text(item[1]["movement"], item[1]["curr"], True, "$")
+            movement_text = get_movement_text(item[1]["movement"], item[1]["curr"], item[1]["prev"], True, "$")
             embed.add_field(name=f"{idx}. {bot.capitalize()}", value=f"{movement_text}", inline=True)
             idx += 1
 
@@ -160,15 +160,16 @@ def get_percentage_clean(value, total):
     return value / (total / 100)
 
 
-def get_movement_text(movement, value, round_value=False, value_prefix=""):
+def get_movement_text(movement, value, value_prev, round_value=False, value_prefix=""):
     if round_value:
-        value = 10 * round(value/10)
+        value = round(value, 0)
+        value_prev = round(value_prev, 0)
     if movement == 0:
-        return f":white_circle: **{movement}%** | {value_prefix}{value}"
+        return f":white_circle: **{movement}%**\n{value_prefix}{value_prev} → **{value_prefix}{value}**"
     elif movement > 0:
-        return f":green_circle: **+{movement}%** | {value_prefix}{value}"
+        return f":green_circle: **+{movement}%**\n{value_prefix}{value_prev} → **{value_prefix}{value}**"
     elif movement < 0:
-        return f":red_circle: **{movement}%** | {value_prefix}{value}"
+        return f":red_circle: **{movement}%**\n{value_prefix}{value_prev} → **{value_prefix}{value}**"
 
 
 def get_movement_int(current, prev=None, dec=2):
