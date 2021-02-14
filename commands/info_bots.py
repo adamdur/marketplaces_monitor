@@ -19,7 +19,7 @@ class Info_bots(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        if not message.guild.id == settings.MACHETE_SERVER:
+        if message.guild.id not in settings.MACHETE_SERVER:
             return
 
         bot_data = await errors_helper.check_info_bot(False, message.channel, guide=self.guide)

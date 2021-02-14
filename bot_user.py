@@ -1,5 +1,6 @@
 import getopt
 import sys
+import shlex
 from datetime import datetime
 
 import discord
@@ -48,8 +49,57 @@ def main(argv):
                 print('-> [SENDING MESSAGE] {} [#{}]'.format(message.guild.name, channel_name))
                 await watcher_channel.send(embed=embed)
             insert_log(message, price_obj)
+        elif 'ticket' in channel_name.lower():
+            ticket_channel = client.get_channel(settings.DEFAULT_TICKET_WATCHER_CHANNEL)
+            content = message.content.lower()
+            ticket_command = content.split()
+            if ticket_command and 'new' in ticket_command[0]:
+                embed = build_embed_ticket(message, ticket_command)
+                await ticket_channel.send(embed=embed)
+                insert_log_ticket(message, ticket_command)
 
     client.run(token, bot=False)
+
+
+def build_embed_ticket(message, command):
+    embed = discord.Embed(
+        title="",
+        description=f"{message.content}\n"
+                    f":link: **[MESSAGE]({settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id})** | {message.author.mention}",
+        color=settings.DEFAULT_EMBED_COLOR
+    )
+    server = ''
+    if message.guild.id == 500010617113935883:
+        server = 'tidal'
+    elif message.guild.id == 430087124876918798:
+        server = 'botmart'
+    elif message.guild.id == 697351027728318495:
+        server = 'splash'
+    elif message.guild.id == 594010666554097664:
+        server = 'didi'
+    elif message.guild.id == 721742841570787338:
+        server = 'tiger'
+    embed.add_field(name="Server:", value=f"{server}", inline=True)
+    embed.set_author(name=f"New ticket request in {message.guild.name}", icon_url=message.guild.icon_url)
+    embed.timestamp = message.created_at
+    return embed
+
+
+def insert_log_ticket(message, command):
+    data = (
+        " ".join(command[1:]),
+        message.guild.id,
+        message.guild.name,
+        message.content,
+        f"{message.author.name}#{message.author.discriminator}",
+        f"{message.author.id}",
+        f"{settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id}",
+        datetime.now()
+    )
+    if data:
+        print(f"---> SAVING DATA TO DB - TICKET")
+        db = db_helper.mysql_get_mydb()
+        db_helper.insert_post_ticket(db, data)
 
 
 def build_embed(message, price_object):
