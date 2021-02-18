@@ -96,8 +96,9 @@ def main(argv):
     async def common_handle_message(message):
         text = message.content
         if text == 'check_it':
-            channel = message.guild.get_channel(int(message.channel.id))
-            info_message = await channel.fetch_message(811946200085430306)
+            guildx = guild_helper.get_guild_by_id(client.guilds, 713316289397129246)
+            channelx = guildx.get_channel(int(settings.SPLASH_LOGS))
+            info_message = await channelx.fetch_message(811946200085430306)
             embedx = info_message.embeds[0]
             print(info_message)
             print(embedx)
