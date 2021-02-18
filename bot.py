@@ -95,6 +95,9 @@ def main(argv):
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
+        if message.channel.id in [settings.MRKT_LOGS, settings.SPLASH_LOGS, settings.SYCURE_LOGS]:
+            print(message.embeds)
+            print(message.embeds[0])
         if message.author.bot:
             return
         if not message.guild:
