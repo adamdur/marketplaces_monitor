@@ -1,22 +1,12 @@
-import getopt
 import sys
 import settings
 import discord
-import shlex
-import re
 import datetime
 import asyncio
 import time
 
-from handlers import message_handler
-from handlers import message_handler_dm
-from helpers import guild as guild_helper
-from helpers import common as common_helper
-from helpers import setup_data as setup_data_helper
-from helpers import channels as channels_helper
 from helpers import webhook as webhook_helper
 from helpers import db as db_helper
-from helpers import bb_api as botbroker
 
 this = sys.modules[__name__]
 this.running = False
@@ -27,13 +17,10 @@ this.TEST_MODE = False
 async def main(argv):
     print("Everything set up... Preparing State of the market...")
     start = time.time()
-    embed = discord.Embed(title=f'Hello world', description='description', color=settings.DEFAULT_EMBED_COLOR)
-
     db = db_helper.mysql_get_mydb()
     sotm_bots = db_helper.get_sotm_bots(db)
 
     date = datetime.date.today()
-    date = date - datetime.timedelta(days=1)
     formated_data = []
     i = 0
     for sotm_bot in sotm_bots:
