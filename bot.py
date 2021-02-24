@@ -3,6 +3,7 @@ import sys
 import settings
 import discord
 import shlex
+import re
 
 from handlers import message_handler
 from handlers import message_handler_dm
@@ -92,16 +93,73 @@ def main(argv):
         print("Bot disconnected")
         # await send_webhook("@here Bot disconnected")
 
+    async def bot_sales_handler(message):
+        if message.channel.id in [811971421840474202, 812308435331711026]:
+            if message.author.bot:
+                try:
+                    message_embed = message.embeds[0].to_dict()
+                except IndexError:
+                    return
+                data = []
+                if 'bot mart' in message_embed['footer']['text'].lower():
+                    server = 'botmart'
+                    author_name = message_embed['author']['name'].lower()
+                    bot_name = author_name.replace(" sales activity", "")
+                    for field in message_embed['fields']:
+                        field_name = field['name'].lower()
+                        if '24h average' in field_name:
+                            renewal_type = field_name[field_name.find("(")+1:field_name.find(")")]
+                            renewal_type.replace('$', '')
+                            price = field['value']
+                            await message.channel.send(f"logged: {server} / {bot_name} / {renewal_type} / {price}")
+                            data.append({
+                                'server': server,
+                                'bot': bot_name.replace(" ", ""),
+                                'renewal': renewal_type,
+                                'price': price.replace('$', '')
+                            })
+
+                elif 'tidal' in message_embed['footer']['text'].lower():
+                    server = 'tidal'
+                    title = message_embed['title'].lower()
+                    bot_name = title.split(' - ')[0]
+                    for field in message_embed['fields']:
+                        field_name = field['name'].lower()
+                        if '24h average' in field_name:
+                            renewal_type = field_name[field_name.find("[")+1:field_name.find("]")]
+                            renewal_type.replace('$', '')
+                            price = field['value']
+                            await message.channel.send(f"logged: {server} / {bot_name} / {renewal_type} / {price}")
+                            data.append({
+                                'server': server,
+                                'bot': bot_name.replace(" ", ""),
+                                'renewal': renewal_type,
+                                'price': price.replace('$', '')
+                            })
+                elif 'splash market' in message_embed['footer']['text'].lower():
+                    server = 'splash'
+                    author_name = message_embed['author']['name'].lower()
+                    bot_name = author_name.split('-')[0].rsplit(' ', 1)[0]
+                    for field in message_embed['fields']:
+                        renewal_type = field['name'].lower()
+                        field_value = field['value'].lower()
+                        start = field_value.find("daily average**: ") + len("daily average**: ")
+                        end = field_value.find("**weekly average")
+                        price = field_value[start:end].strip()
+                        await message.channel.send(f"logged: {server} / {bot_name} / {renewal_type} / {price}")
+                        data.append({
+                            'server': server,
+                            'bot': bot_name.replace(" ", ""),
+                            'renewal': renewal_type,
+                            'price': price.replace('$', '')
+                        })
+                if data:
+                    db = db_helper.mysql_get_mydb()
+                    logged = db_helper.log_sale(db, data)
+
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
-        if text == 'check_it':
-            guildx = guild_helper.get_guild_by_id(client.guilds, 713316289397129246)
-            channelx = guildx.get_channel(int(settings.SPLASH_LOGS))
-            info_message = await channelx.fetch_message(811946200085430306)
-            embedx = info_message.embeds[0]
-            print(info_message)
-            print(embedx)
         if message.author.bot:
             return
         if not message.guild:
@@ -287,6 +345,7 @@ def main(argv):
     @client.event
     async def on_message_edit(before, after):
         await common_handle_message(after)
+        await bot_sales_handler(after)
 
     client.run(token)
 

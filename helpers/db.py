@@ -1,6 +1,7 @@
 import settings
 import mysql.connector as mysql
 import datetime
+from decimal import Decimal
 
 from helpers import common as common_helper
 
@@ -666,3 +667,119 @@ def destroy_ticket_monitor(db, guild_id, channel_id):
     db.commit()
     db.close()
     return deleted
+
+
+def get_sotm_commands(db):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT bot, commands, botbroker, renewal FROM market_state " \
+            "WHERE active = 1 "
+    cursor.execute(query)
+    commands = cursor.fetchall()
+    db.commit()
+    db.close()
+    return commands
+
+
+def get_sotm_bots(db):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT * FROM market_state " \
+            "WHERE active = 1 "
+    cursor.execute(query)
+    commands = cursor.fetchall()
+    db.commit()
+    db.close()
+    return commands
+
+
+def get_sotm_bot_sales(db, bot, renewal, date):
+    prev_date = date - datetime.timedelta(days=1)
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT AVG(price) average FROM sales " \
+            "WHERE bot LIKE %s " \
+            "AND price != 0 " \
+            "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
+            "AND date = %s"
+
+    cursor.execute(query, (f"%{bot}%", date))
+    current = cursor.fetchall()
+
+    cursor.execute(query, (f"%{bot}%", prev_date))
+    prev = cursor.fetchall()
+
+    if not prev[0]['average']:
+        new_query = "SELECT AVG(price) average FROM sales " \
+                    "WHERE bot LIKE %s " \
+                    "AND price != 0 " \
+                    "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
+                    "AND date < %s " \
+                    "GROUP BY date " \
+                    "HAVING AVG(price) > 0 " \
+                    "ORDER BY date DESC " \
+                    "LIMIT 1"
+        cursor.execute(new_query, (f"%{bot}%", date))
+        prev = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return {
+        'current': current[0]['average'] if current[0]['average'] else 0,
+        'prev': prev[0]['average'] if prev[0]['average'] else 0
+    }
+
+
+def get_sotm_demand(db, bot, renewal):
+    if 'lifetime' in renewal:
+        renewal = '1'
+    else:
+        renewal = '0'
+    if bot == 'mekpreme':
+        bot = 'mek'
+    elif bot == 'splashforce':
+        bot = 'sf'
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=1)
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT COUNT(DISTINCT user_id) unique_users "
+             "FROM posts "
+             "WHERE bot = %s "
+             "AND is_lifetime = %s "
+             "AND type = 'wtb' "
+             "AND created_at > %s "
+             "AND created_at < %s ")
+    cursor.execute(query, (bot, renewal, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+    return data[0]['unique_users']
+
+
+def log_sale(db, data):
+    date = datetime.date.today()
+    for log in data:
+        if log['bot'] == 'projectdestroyer':
+            log['bot'] = 'pd'
+        if log['bot'] == 'cybersole':
+            log['bot'] = 'cyber'
+        cursor = db.cursor(dictionary=True)
+        query = "INSERT INTO sales (server, bot, renewal, price, date) " \
+                "VALUES (%s, %s, %s, %s, %s)"
+        renewal = renewal_helper(log['renewal'])
+        price = '0' if log['price'] == 'n/a' else log['price']
+        cursor.execute(query, (log['server'], log['bot'], renewal, Decimal(price.replace(',', '.')), date))
+
+    db.commit()
+    db.close()
+    return True
+
+
+def renewal_helper(renewal):
+    if renewal in ['renewal', 'lifetime', 'monthly']:
+        return renewal
+    elif renewal.startswith('renewal '):
+        return renewal.replace('renewal ', '')
+    elif 'for' in renewal:
+        return renewal.split('for')[0].replace('$', '').replace('€', '').replace('£', '').strip()
+    elif '/' in renewal:
+        return renewal.split('/')[0].replace('$', '').replace('€', '').replace('£', '').strip()
+    else:
+        return renewal
