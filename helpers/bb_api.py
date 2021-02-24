@@ -102,6 +102,19 @@ async def get_lowest_ask(bot_id, key_type='renewal'):
         return False
 
 
+async def get_highest_bid(bot_id, key_type='renewal'):
+    params = {'page': 1, 'sort_by': 'price', 'order': 'desc', 'key_type': key_type}
+
+    response = await async_api_call('bids?product_id={}'.format(bot_id), params)
+    if not response:
+        return False
+    data = response.json()
+    try:
+        return data['asks'][0]
+    except:
+        return False
+
+
 async def get_bids(bot_id, message, page=1, sort_by='price', order='desc', key_type='renewal'):
     params = {}
     if page:
