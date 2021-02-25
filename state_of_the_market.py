@@ -73,7 +73,7 @@ async def main(argv):
             name=f"{values['bot']}",
             value=f"**Price:** ${values['price']}\n"
                   f"**Demand:** {values['demand']}\n"
-                  f"**Move:** {values['movement']}\n\u200b",
+                  f"**Trend:** {values['movement']}\n\u200b",
             inline=True
         )
 
