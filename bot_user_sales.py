@@ -25,6 +25,11 @@ def main(argv):
         print("Executing commands...")
         for bot in bots:
             bot_commands = bot['commands'].split(',')
+            for command in bot_commands:
+                guild = guild_helper.get_guild_by_id(client.guilds, 776501462242689064)
+                channel = guild.get_channel(812308435331711026)
+                await channel.send(command)
+                time.sleep(10)
             if bot['botbroker']:
                 bb_bid = await botbroker.get_highest_bid(bot['botbroker'], 'lifetime' if 'lifetime' in bot['renewal'] else 'renewal')
                 try:
@@ -39,11 +44,7 @@ def main(argv):
                         logged = db_helper.log_sale(db, bb_data)
                 except:
                     print(f"Unable to log botbroker sale for {bot['bot']}")
-            for command in bot_commands:
-                guild = guild_helper.get_guild_by_id(client.guilds, 776501462242689064)
-                channel = guild.get_channel(812308435331711026)
-                await channel.send(command)
-                time.sleep(10)
+                    continue
         await client.close()
         print('Finished. Total elapsed time: {}'.format(time.time() - start))
 
