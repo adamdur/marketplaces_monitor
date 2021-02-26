@@ -26,15 +26,14 @@ def main(argv):
         for bot in bots:
             bot_commands = bot['commands'].split(',')
             if bot['botbroker']:
-                bb_ask = await botbroker.get_lowest_ask(bot['botbroker'], 'lifetime' if 'lifetime' in bot['renewal'] else 'renewal')
                 bb_bid = await botbroker.get_highest_bid(bot['botbroker'], 'lifetime' if 'lifetime' in bot['renewal'] else 'renewal')
                 try:
-                    if bb_ask['price'] and bb_bid['price']:
+                    if bb_bid['price']:
                         bb_data = [{
                             'server': 'botbroker',
                             'bot': bot['bot'],
                             'renewal': 'lifetime' if 'lifetime' in bot['renewal'] else 'renewal',
-                            'price': str((bb_ask['price'] + bb_bid['price']) / 2)
+                            'price': str(bb_bid['price'])
                         }]
                         db = db_helper.mysql_get_mydb()
                         logged = db_helper.log_sale(db, bb_data)
