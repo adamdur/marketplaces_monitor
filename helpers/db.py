@@ -772,6 +772,49 @@ def log_sale(db, data):
     return True
 
 
+def insert_channel(db, data):
+    cursor = db.cursor(dictionary=True)
+    get_query = "SELECT id FROM channels " \
+                "WHERE bot = %s " \
+                "AND type = %s " \
+                "AND guild_id = %s"
+    cursor.execute(get_query, (data['bot'], data['type'], data['guild_id']))
+    existing_channel = cursor.fetchone()
+    if existing_channel:
+        query = "UPDATE channels " \
+                "SET guild_name= %s, guild_icon = %s, url= %s " \
+                "WHERE id = %s"
+        cursor.execute(query, (data['guild_name'], data['guild_icon'], data['url'], existing_channel['id']))
+    else:
+        query = "INSERT INTO channels (bot, type, guild_id, guild_name, guild_icon, channel_name, url) " \
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(query, (data['bot'], data['type'], data['guild_id'], data['guild_name'], data['guild_icon'], data['channel_name'], data['url']))
+
+    db.commit()
+    db.close()
+    return True
+
+
+def get_channels(db, bot, type=False):
+    cursor = db.cursor(dictionary=True)
+    get_query = "SELECT * FROM channels " \
+                "WHERE bot = %s "
+    if type:
+        get_query += "AND type = %s "
+
+    get_query += "GROUP BY type, guild_id"
+
+    if type:
+        cursor.execute(get_query, (bot, type))
+    else:
+        cursor.execute(get_query, (bot,))
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return data
+
+
 def renewal_helper(renewal):
     if renewal in ['renewal', 'lifetime', 'monthly']:
         return renewal
