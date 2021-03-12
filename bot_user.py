@@ -36,6 +36,8 @@ def main(argv):
 
     @client.event
     async def on_message(message):
+        if message.guild.id == 776501462242689064:
+            return
         channel_name = message.channel.name
         if any(s in channel_name for s in settings.CHANNELS_IDENTIFIERS):
             # if any(negative in channel_name for negative in settings.CHANNELS_NEGATIVE_IDENTIFIERS):
