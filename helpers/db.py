@@ -671,8 +671,7 @@ def destroy_ticket_monitor(db, guild_id, channel_id):
 
 def get_sotm_commands(db):
     cursor = db.cursor(dictionary=True)
-    query = "SELECT bot, commands, botbroker, renewal FROM market_state " \
-            "WHERE active = 1 "
+    query = "SELECT bot, commands, botbroker, renewal FROM market_state "
     cursor.execute(query)
     commands = cursor.fetchall()
     db.commit()
