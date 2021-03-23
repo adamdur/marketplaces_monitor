@@ -318,6 +318,68 @@ def get_pricing_stats(db, days, renewal):
     return full_data
 
 
+def get_graph_sales(db, bot):
+    if bot == 'mek':
+        bot = 'mekpreme'
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT AVG(price) average, renewal, date FROM sales " \
+            "WHERE bot LIKE %s " \
+            "AND price != 0 " \
+            "AND date >= %s " \
+            "AND date <= %s " \
+            "GROUP BY date, renewal " \
+            "HAVING average > 0 " \
+            "ORDER BY date ASC"
+
+    now = datetime.datetime.now()
+    last_day = now
+    start = now - datetime.timedelta(days=int(settings.GRAPH_DATA_DAYS))
+
+    cursor.execute(query, (f"%{bot}%", start, last_day))
+    data = cursor.fetchall()
+
+    base = datetime.datetime.today()
+    date_list = [base - datetime.timedelta(days=x) for x in range(settings.GRAPH_DATA_DAYS)]
+    date_list.reverse()
+
+    formatted_data = {}
+    xlabels = []
+    for xdate in date_list:
+        formatted_data[f"{xdate.strftime('%Y/%m/%d')}"] = {}
+        formatted_data[f"{xdate.strftime('%Y/%m/%d')}"]['lifetime'] = []
+        formatted_data[f"{xdate.strftime('%Y/%m/%d')}"]['renewal'] = []
+        xlabels.append(xdate.strftime("%Y/%m/%d"))
+
+    for row in data:
+        if 'lifetime' in row['renewal']:
+            row_renewal = 'lifetime'
+        else:
+            row_renewal = 'renewal'
+        try:
+            formatted_data[row['date'].strftime("%Y/%m/%d")][row_renewal].append(row['average'])
+        except:
+            formatted_data[row['date'].strftime("%Y/%m/%d")][row_renewal] = []
+            formatted_data[row['date'].strftime("%Y/%m/%d")][row_renewal].append(row['average'])
+
+    final_data = {}
+    for key, value in formatted_data.items():
+        for ren, price in value.items():
+            count = len(price)
+            avg_price = sum(price) / count if count > 0 else None
+            try:
+                final_data[ren].append(avg_price)
+            except KeyError:
+                final_data[ren] = []
+                final_data[ren].append(avg_price)
+
+    db.commit()
+    db.close()
+    return {
+        'xlabels': xlabels,
+        'data': final_data
+    }
+
+
 def get_graph_data_pricing(db, bot, renewal):
     cursor = db.cursor(dictionary=True)
     query_graph = ("SELECT type, AVG(price) AS price, DATE(created_at) AS date FROM posts "

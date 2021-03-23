@@ -10,9 +10,20 @@ TEXT_COLOR = '#b9c3cc'
 GRID_COLOR = '#454b51'
 RED_COLOR = '#e36b6b'
 GREEN_COLOR = '#5fd79a'
+OTHER_COLORS = [
+    '#e36b6b',
+    '#5fd79a',
+    '#6a7cff',
+    '#e3d421',
+    '#972b2b',
+    '#e36b6b',
+    '#5fd79a',
+    '#d165f4',
+    '#6ef465'
+]
 
 
-def create_line_graph_pricing(data, bot=''):
+def create_line_graph_pricing(data, bot='', sales=False):
     xlabels = data['xlabels']
     wts = data['wts']
     wtb = data['wtb']
@@ -28,6 +39,68 @@ def create_line_graph_pricing(data, bot=''):
 
     ax.plot(xs[s1mask], series1[s1mask], linestyle='-', marker='o', linewidth=3, label='wts', color=RED_COLOR)
     ax.plot(xs[s2mask], series2[s2mask], linestyle='-', marker='o', linewidth=3, label='wtb', color=GREEN_COLOR)
+    if sales:
+        i = 0
+        for key, value in sales.items():
+            series = np.array(sales[key]).astype(np.double)
+            mask = np.isfinite(series)
+            label = key
+            if key not in ['renewal', 'lifetime']:
+                label = f"{key} renewal"
+            ax.plot(xs[mask], series[mask], linestyle=':', marker='o', linewidth=3, label=f"{label} sales", color=OTHER_COLORS[i])
+            i += 1
+
+    y = np.array(range(1, len(xlabels)+1))
+    x = np.arange(y.shape[0])
+    my_xticks = np.array(xlabels)
+    frequency = 3
+    plt.xticks(x[::frequency], my_xticks[::frequency], rotation=30, fontsize=16, fontweight='bold')
+    plt.yticks(fontsize=20, fontweight='bold')
+    plt.legend()
+
+    for t in ax.xaxis.get_ticklabels():
+        t.set_color(TEXT_COLOR)
+    for t in ax.yaxis.get_ticklabels():
+        t.set_color(TEXT_COLOR)
+    ax.spines['bottom'].set_color(TEXT_COLOR)
+    ax.spines['top'].set_color(TEXT_COLOR)
+    ax.spines['left'].set_color(TEXT_COLOR)
+    ax.spines['right'].set_color(TEXT_COLOR)
+    ax.yaxis.label.set_color(TEXT_COLOR)
+    ax.tick_params(axis='x', colors=TEXT_COLOR)
+    ax.tick_params(axis='y', colors=TEXT_COLOR)
+
+    label = 'Average Price ($)'
+    ax.set(ylabel=label)
+    ax.grid(color=GRID_COLOR)
+    ax.set_facecolor(BG_COLOR)
+    fig.patch.set_facecolor(BG_COLOR)
+    timestamp = int(round(time.time() * 1000))
+    filename = 'graph{}.png'.format(timestamp)
+    filepath = settings.BASE_DIR + '/tmp/{}'.format(filename)
+    fig.savefig(filepath, bbox_inches='tight')
+    return filepath
+
+
+def create_line_graph_sales(sales, bot=''):
+    xlabels = sales['xlabels']
+    xs = np.arange(len(xlabels))
+
+    fig, ax = plt.subplots(figsize=(15, 10))
+    title_obj = plt.title('Sales stats{}'.format(' for ' + bot.capitalize() if bot else ''), fontsize=20)
+    plt.setp(title_obj, color=TEXT_COLOR)
+
+    if sales['data']:
+        i = 0
+        sales_data = sales['data']
+        for key, value in sales_data.items():
+            series = np.array(sales_data[key]).astype(np.double)
+            mask = np.isfinite(series)
+            label = key
+            if key not in ['renewal', 'lifetime']:
+                label = f"{key} renewal"
+            ax.plot(xs[mask], series[mask], linestyle='-', marker='o', linewidth=3, label=f"{label} sales", color=OTHER_COLORS[i])
+            i += 1
 
     y = np.array(range(1, len(xlabels)+1))
     x = np.arange(y.shape[0])
