@@ -302,8 +302,11 @@ def main(argv):
                             continue
                         if _post:
                             kw_channel_to_post = channels_helper.get_channel_by_id(data[guild_id]['guild'].channels, kw_channel['id'])
-                            print('---> GOING TO POST IN KW CHANNEL #{}'.format(idx))
-                            await kw_channel_to_post.send(embed=clean_embed)
+                            print('---> GOING TO POST IN KW CHANNEL #{} - {}'.format(idx, guild_data.name))
+                            try:
+                                await kw_channel_to_post.send(embed=clean_embed)
+                            except AttributeError:
+                                await webhook_helper.send_invalid_channel_webhook(guild_id, guild_data.name, idx)
                     except KeyError:
                         continue
 
@@ -333,9 +336,11 @@ def main(argv):
                                         if notify_with_handle:
                                             for handle in handles:
                                                 notify_handles += ' ' + handle
-                        print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_id))
-                        # clean_embed.set_footer(text=f"[{notify_guild.name}]", icon_url=notify_guild.icon_url)
-                        await channel_to_post.send(embed=clean_embed, content=notify_handles)
+                        print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_data.name))
+                        try:
+                            await channel_to_post.send(embed=clean_embed, content=notify_handles)
+                        except AttributeError:
+                            await webhook_helper.send_invalid_channel_webhook(guild_id, guild_data.name, final_channel)
 
     @client.event
     async def on_message(message):
