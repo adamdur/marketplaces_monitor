@@ -1,6 +1,7 @@
 import settings
 import mysql.connector as mysql
 import datetime
+from decimal import Decimal
 
 from helpers import common as common_helper
 
@@ -315,6 +316,68 @@ def get_pricing_stats(db, days, renewal):
                 full_data[row['bot']].update({row['type'] + "_past": row['price']})
 
     return full_data
+
+
+def get_graph_sales(db, bot):
+    if bot == 'mek':
+        bot = 'mekpreme'
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT AVG(price) average, renewal, date FROM sales " \
+            "WHERE bot LIKE %s " \
+            "AND price != 0 " \
+            "AND date >= %s " \
+            "AND date <= %s " \
+            "GROUP BY date, renewal " \
+            "HAVING average > 0 " \
+            "ORDER BY date ASC"
+
+    now = datetime.datetime.now()
+    last_day = now
+    start = now - datetime.timedelta(days=int(settings.GRAPH_DATA_DAYS))
+
+    cursor.execute(query, (f"%{bot}%", start, last_day))
+    data = cursor.fetchall()
+
+    base = datetime.datetime.today()
+    date_list = [base - datetime.timedelta(days=x) for x in range(settings.GRAPH_DATA_DAYS)]
+    date_list.reverse()
+
+    formatted_data = {}
+    xlabels = []
+    for xdate in date_list:
+        formatted_data[f"{xdate.strftime('%Y/%m/%d')}"] = {}
+        formatted_data[f"{xdate.strftime('%Y/%m/%d')}"]['lifetime'] = []
+        formatted_data[f"{xdate.strftime('%Y/%m/%d')}"]['renewal'] = []
+        xlabels.append(xdate.strftime("%Y/%m/%d"))
+
+    for row in data:
+        if 'lifetime' in row['renewal']:
+            row_renewal = 'lifetime'
+        else:
+            row_renewal = 'renewal'
+        try:
+            formatted_data[row['date'].strftime("%Y/%m/%d")][row_renewal].append(row['average'])
+        except:
+            formatted_data[row['date'].strftime("%Y/%m/%d")][row_renewal] = []
+            formatted_data[row['date'].strftime("%Y/%m/%d")][row_renewal].append(row['average'])
+
+    final_data = {}
+    for key, value in formatted_data.items():
+        for ren, price in value.items():
+            count = len(price)
+            avg_price = sum(price) / count if count > 0 else None
+            try:
+                final_data[ren].append(avg_price)
+            except KeyError:
+                final_data[ren] = []
+                final_data[ren].append(avg_price)
+
+    db.commit()
+    db.close()
+    return {
+        'xlabels': xlabels,
+        'data': final_data
+    }
 
 
 def get_graph_data_pricing(db, bot, renewal):
@@ -666,3 +729,161 @@ def destroy_ticket_monitor(db, guild_id, channel_id):
     db.commit()
     db.close()
     return deleted
+
+
+def get_sotm_commands(db):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT bot, commands, botbroker, renewal FROM market_state "
+    cursor.execute(query)
+    commands = cursor.fetchall()
+    db.commit()
+    db.close()
+    return commands
+
+
+def get_sotm_bots(db):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT * FROM market_state " \
+            "WHERE active = 1 "
+    cursor.execute(query)
+    commands = cursor.fetchall()
+    db.commit()
+    db.close()
+    return commands
+
+
+def get_sotm_bot_sales(db, bot, renewal, date):
+    prev_date = date - datetime.timedelta(days=1)
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT AVG(price) average FROM sales " \
+            "WHERE bot LIKE %s " \
+            "AND price != 0 " \
+            "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
+            "AND date = %s"
+
+    cursor.execute(query, (f"%{bot}%", date))
+    current = cursor.fetchall()
+
+    cursor.execute(query, (f"%{bot}%", prev_date))
+    prev = cursor.fetchall()
+
+    if not prev[0]['average']:
+        new_query = "SELECT AVG(price) average FROM sales " \
+                    "WHERE bot LIKE %s " \
+                    "AND price != 0 " \
+                    "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
+                    "AND date < %s " \
+                    "GROUP BY date " \
+                    "HAVING AVG(price) > 0 " \
+                    "ORDER BY date DESC " \
+                    "LIMIT 1"
+        cursor.execute(new_query, (f"%{bot}%", date))
+        prev = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return {
+        'current': current[0]['average'] if current[0]['average'] else 0,
+        'prev': prev[0]['average'] if prev[0]['average'] else 0
+    }
+
+
+def get_sotm_demand(db, bot, renewal):
+    if 'lifetime' in renewal:
+        renewal = '1'
+    else:
+        renewal = '0'
+    if bot == 'mekpreme':
+        bot = 'mek'
+    elif bot == 'splashforce':
+        bot = 'sf'
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=1)
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT COUNT(DISTINCT user_id) unique_users "
+             "FROM posts "
+             "WHERE bot = %s "
+             "AND is_lifetime = %s "
+             "AND type = 'wtb' "
+             "AND created_at > %s "
+             "AND created_at < %s ")
+    cursor.execute(query, (bot, renewal, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+    return data[0]['unique_users']
+
+
+def log_sale(db, data):
+    date = datetime.date.today()
+    for log in data:
+        if log['bot'] == 'projectdestroyer':
+            log['bot'] = 'pd'
+        if log['bot'] == 'cybersole':
+            log['bot'] = 'cyber'
+        cursor = db.cursor(dictionary=True)
+        query = "INSERT INTO sales (server, bot, renewal, price, date) " \
+                "VALUES (%s, %s, %s, %s, %s)"
+        renewal = renewal_helper(log['renewal'])
+        price = '0' if log['price'] == 'n/a' else log['price']
+        cursor.execute(query, (log['server'], log['bot'], renewal, Decimal(price.replace(',', '.')), date))
+
+    db.commit()
+    db.close()
+    return True
+
+
+def insert_channel(db, data):
+    cursor = db.cursor(dictionary=True)
+    get_query = "SELECT id FROM channels " \
+                "WHERE bot = %s " \
+                "AND type = %s " \
+                "AND guild_id = %s"
+    cursor.execute(get_query, (data['bot'], data['type'], data['guild_id']))
+    existing_channel = cursor.fetchone()
+    if existing_channel:
+        query = "UPDATE channels " \
+                "SET guild_name= %s, guild_icon = %s, url= %s " \
+                "WHERE id = %s"
+        cursor.execute(query, (data['guild_name'], data['guild_icon'], data['url'], existing_channel['id']))
+    else:
+        query = "INSERT INTO channels (bot, type, guild_id, guild_name, guild_icon, channel_name, url) " \
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(query, (data['bot'], data['type'], data['guild_id'], data['guild_name'], data['guild_icon'], data['channel_name'], data['url']))
+
+    db.commit()
+    db.close()
+    return True
+
+
+def get_channels(db, bot, type=False):
+    cursor = db.cursor(dictionary=True)
+    get_query = "SELECT * FROM channels " \
+                "WHERE bot = %s "
+    if type:
+        get_query += "AND type = %s "
+
+    get_query += "GROUP BY type, guild_id"
+
+    if type:
+        cursor.execute(get_query, (bot, type))
+    else:
+        cursor.execute(get_query, (bot,))
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def renewal_helper(renewal):
+    if renewal in ['renewal', 'lifetime', 'monthly']:
+        return renewal
+    elif renewal.startswith('renewal '):
+        return renewal.replace('renewal ', '')
+    elif 'for' in renewal:
+        return renewal.split('for')[0].replace('$', '').replace('€', '').replace('£', '').strip()
+    elif '/' in renewal:
+        return renewal.split('/')[0].replace('$', '').replace('€', '').replace('£', '').strip()
+    else:
+        return renewal

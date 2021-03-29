@@ -3,6 +3,7 @@ import sys
 import settings
 import discord
 import shlex
+import re
 
 from handlers import message_handler
 from handlers import message_handler_dm
@@ -91,6 +92,70 @@ def main(argv):
     async def on_disconnect():
         print("Bot disconnected")
         # await send_webhook("@here Bot disconnected")
+
+    async def bot_sales_handler(message):
+        if message.channel.id in [811971421840474202, 812308435331711026]:
+            if message.author.bot:
+                try:
+                    message_embed = message.embeds[0].to_dict()
+                except IndexError:
+                    return
+                data = []
+                if 'bot mart' in message_embed['footer']['text'].lower():
+                    server = 'botmart'
+                    author_name = message_embed['author']['name'].lower()
+                    bot_name = author_name.replace(" sales activity", "")
+                    for field in message_embed['fields']:
+                        field_name = field['name'].lower()
+                        if '24h average' in field_name:
+                            renewal_type = field_name[field_name.find("(")+1:field_name.find(")")]
+                            renewal_type.replace('$', '')
+                            price = field['value']
+                            await message.channel.send(f"logged: {server} / {bot_name} / {renewal_type} / {price}")
+                            data.append({
+                                'server': server,
+                                'bot': bot_name.replace(" ", ""),
+                                'renewal': renewal_type,
+                                'price': price.replace('$', '')
+                            })
+
+                elif 'tidal' in message_embed['footer']['text'].lower():
+                    server = 'tidal'
+                    title = message_embed['title'].lower()
+                    bot_name = title.split(' - ')[0]
+                    for field in message_embed['fields']:
+                        field_name = field['name'].lower()
+                        if '24h average' in field_name:
+                            renewal_type = field_name[field_name.find("[")+1:field_name.find("]")]
+                            renewal_type.replace('$', '')
+                            price = field['value']
+                            await message.channel.send(f"logged: {server} / {bot_name} / {renewal_type} / {price}")
+                            data.append({
+                                'server': server,
+                                'bot': bot_name.replace(" ", ""),
+                                'renewal': renewal_type,
+                                'price': price.replace('$', '')
+                            })
+                elif 'splash market' in message_embed['footer']['text'].lower():
+                    server = 'splash'
+                    author_name = message_embed['author']['name'].lower()
+                    bot_name = author_name.split('-')[0].rsplit(' ', 1)[0]
+                    for field in message_embed['fields']:
+                        renewal_type = field['name'].lower()
+                        field_value = field['value'].lower()
+                        start = field_value.find("daily average**: ") + len("daily average**: ")
+                        end = field_value.find("**weekly average")
+                        price = field_value[start:end].strip()
+                        await message.channel.send(f"logged: {server} / {bot_name} / {renewal_type} / {price}")
+                        data.append({
+                            'server': server,
+                            'bot': bot_name.replace(" ", ""),
+                            'renewal': renewal_type,
+                            'price': price.replace('$', '')
+                        })
+                if data:
+                    db = db_helper.mysql_get_mydb()
+                    logged = db_helper.log_sale(db, data)
 
     # The message handler for both new message and edits
     async def common_handle_message(message):
@@ -237,8 +302,11 @@ def main(argv):
                             continue
                         if _post:
                             kw_channel_to_post = channels_helper.get_channel_by_id(data[guild_id]['guild'].channels, kw_channel['id'])
-                            print('---> GOING TO POST IN KW CHANNEL #{}'.format(idx))
-                            await kw_channel_to_post.send(embed=clean_embed)
+                            print('---> GOING TO POST IN KW CHANNEL #{} - {}'.format(idx, guild_data.name))
+                            try:
+                                await kw_channel_to_post.send(embed=clean_embed)
+                            except AttributeError:
+                                await webhook_helper.send_invalid_channel_webhook(guild_id, guild_data.name, idx)
                     except KeyError:
                         continue
 
@@ -268,9 +336,11 @@ def main(argv):
                                         if notify_with_handle:
                                             for handle in handles:
                                                 notify_handles += ' ' + handle
-                        print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_id))
-                        # clean_embed.set_footer(text=f"[{notify_guild.name}]", icon_url=notify_guild.icon_url)
-                        await channel_to_post.send(embed=clean_embed, content=notify_handles)
+                        print('---> GOING TO POST IN #{} - {}'.format(final_channel, guild_data.name))
+                        try:
+                            await channel_to_post.send(embed=clean_embed, content=notify_handles)
+                        except AttributeError:
+                            await webhook_helper.send_invalid_channel_webhook(guild_id, guild_data.name, final_channel)
 
     @client.event
     async def on_message(message):
@@ -280,6 +350,7 @@ def main(argv):
     @client.event
     async def on_message_edit(before, after):
         await common_handle_message(after)
+        await bot_sales_handler(after)
 
     client.run(token)
 
