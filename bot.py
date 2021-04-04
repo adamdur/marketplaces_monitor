@@ -88,11 +88,6 @@ def main(argv):
             if guild_id == str(guild.id):
                 del this.setup_data[index]
 
-    @client.event
-    async def on_disconnect():
-        print("Bot disconnected")
-        # await send_webhook("@here Bot disconnected")
-
     async def bot_sales_handler(message):
         if message.channel.id in [811971421840474202, 812308435331711026]:
             if message.author.bot:
@@ -346,6 +341,7 @@ def main(argv):
     async def on_message(message):
         await common_handle_message(message)
         await common_watcher_handle_message(message)
+        await bot_sales_handler(message)
 
     @client.event
     async def on_message_edit(before, after):
