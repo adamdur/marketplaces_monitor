@@ -64,7 +64,7 @@ def build_embed_ticket(message, command):
     embed = discord.Embed(
         title="",
         description=f"{message.content}\n"
-                    f":link: **[MESSAGE]({settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id})** | {message.author.mention}",
+                    f":link: [MESSAGE]({settings.DISCORD_URL}/channels/{message.guild.id}/{message.channel.id}/{message.id}) | {message.author.mention}",
         color=settings.DEFAULT_EMBED_COLOR
     )
     server = ''
@@ -116,7 +116,7 @@ def build_embed(message, price_object):
     else:
         embed.add_field(name="Posted by:", value=message.author, inline=True)
     embed.add_field(name="Posted in:", value="<#{}>".format(message.channel.id), inline=True)
-    embed.add_field(name="Message link:", value=":link: **[MESSAGE]({}/channels/{}/{}/{})**".format(settings.DISCORD_URL, message.guild.id, message.channel.id, message.id), inline=False)
+    embed.add_field(name="Message link:", value=":link: [MESSAGE]({}/channels/{}/{}/{})".format(settings.DISCORD_URL, message.guild.id, message.channel.id, message.id), inline=False)
     embed.add_field(name="Message content:", value="{}".format(message.content), inline=False)
     embed.add_field(name="Price level:", value="{}".format(price_level), inline=False)
     embed.add_field(name="Is lifetime:", value="1" if any(s in message.content.lower() for s in ['lt', 'lifetime', 'life time', 'life']) else "0", inline=False)
