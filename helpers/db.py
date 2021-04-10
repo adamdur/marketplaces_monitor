@@ -887,3 +887,54 @@ def renewal_helper(renewal):
         return renewal.split('/')[0].replace('$', '').replace('€', '').replace('£', '').strip()
     else:
         return renewal
+
+
+def get_verified_guilds(db):
+    cursor = db.cursor()
+    query = "SELECT server FROM licenses WHERE active = 1"
+
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return list(map(lambda x: x[0], data))
+
+
+def get_licenses(db, active=False):
+    cursor = db.cursor()
+    query = "SELECT * FROM licenses WHERE active = %s"
+
+    cursor.execute(query, active)
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def get_license(db, license_key):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT * FROM licenses WHERE license = %s"
+
+    cursor.execute(query, (license_key,))
+    data = cursor.fetchone()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def insert_license(db, data):
+    cursor = db.cursor(dictionary=True)
+    insert_query = (
+        "INSERT INTO licenses (license, server, user_name, user_id, active, created_at, updated_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s)")
+    now = datetime.datetime.now()
+    data.extend([now, now])
+    cursor.execute(insert_query, data)
+    post = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return post

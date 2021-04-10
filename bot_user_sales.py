@@ -26,8 +26,8 @@ def main(argv):
         for bot in bots:
             bot_commands = bot['commands'].split(',')
             for command in bot_commands:
-                guild = guild_helper.get_guild_by_id(client.guilds, 776501462242689064)
-                channel = guild.get_channel(812308435331711026)
+                guild = guild_helper.get_guild_by_id(client.guilds, settings.SALES_LOGGER_SERVER_ID)
+                channel = guild.get_channel(settings.SALES_LOGGER_CHANNEL_ID)
                 await channel.send(command)
                 time.sleep(10)
             if bot['botbroker']:

@@ -40,9 +40,6 @@ def main(argv):
             return
         channel_name = message.channel.name
         if any(s in channel_name for s in settings.CHANNELS_IDENTIFIERS):
-            # if any(negative in channel_name for negative in settings.CHANNELS_NEGATIVE_IDENTIFIERS):
-            #     return
-
             price_obj = common_helper.get_formatted_price(message)
             embed = build_embed(message, price_obj)
             watcher_channel = client.get_channel(settings.DEFAULT_WATCHER_CHANNEL)
@@ -52,12 +49,12 @@ def main(argv):
                 await watcher_channel.send(embed=embed)
             insert_log(message, price_obj)
         elif 'ticket' in channel_name.lower():
-            ticket_channel = client.get_channel(settings.DEFAULT_TICKET_WATCHER_CHANNEL)
+            # ticket_channel = client.get_channel(settings.DEFAULT_TICKET_WATCHER_CHANNEL)
             content = message.content.lower()
             ticket_command = content.split()
             if ticket_command and 'new' in ticket_command[0]:
-                embed = build_embed_ticket(message, ticket_command)
-                await ticket_channel.send(embed=embed)
+                # embed = build_embed_ticket(message, ticket_command)
+                # await ticket_channel.send(embed=embed)
                 insert_log_ticket(message, ticket_command)
 
     client.run(token, bot=False)

@@ -49,15 +49,19 @@ def main(argv):
         message_file = f"{settings.BASE_DIR}/messages/info_message.txt"
         message = await setup_data_helper.get_file_content(message_file)
         open(message_file, "w").close()
+
+        db = db_helper.mysql_get_mydb()
+        verified_guilds = db_helper.get_verified_guilds(db)
         for guild in client.guilds:
-            if int(guild.id) in settings.VERIFIED_GUILDS:
+            if str(guild.id) not in verified_guilds:
+                print(f"!!! GUILD NOT VERIFIED {guild.id}: {guild.name} !!!")
+            else:
+                print(f"GUILD VERIFIED {guild.id}: {guild.name}")
                 guild_data = await guild_helper.base_guild_setup(guild)
                 this.setup_data.append(guild_data)
                 commands_channel = next(iter(guild_data.values()))['commands_channel']
                 if commands_channel and message:
                     await commands_channel.send(message)
-            else:
-                await guild.leave()
 
         print("Everything set up... Watching marketplaces...")
         await send_webhook("Bot running")
@@ -75,10 +79,11 @@ def main(argv):
 
     @client.event
     async def on_guild_join(guild):
-        if int(guild.id) in settings.VERIFIED_GUILDS:
-            this.setup_data.append(await guild_helper.base_guild_setup(guild))
-        else:
-            await guild.leave()
+        db = db_helper.mysql_get_mydb()
+        verified_guilds = db_helper.get_verified_guilds(db)
+        if str(guild.id) not in verified_guilds:
+            return
+        this.setup_data.append(await guild_helper.base_guild_setup(guild))
 
     @client.event
     async def on_guild_remove(guild):
@@ -165,6 +170,11 @@ def main(argv):
                 raise
         if text.startswith(settings.COMMAND_PREFIX) and text != settings.COMMAND_PREFIX:
             cmd_split = shlex.split(text[len(settings.COMMAND_PREFIX):])
+
+            is_verified = await is_verified_guild(message, cmd_split[0].lower())
+            if not is_verified:
+                return
+
             if cmd_split[0].lower() in settings.ADMIN_COMMANDS:
                 if not [role for role in message.author.roles if role.name.lower() in settings.ALLOWED_ROLES]:
                     return
@@ -175,32 +185,9 @@ def main(argv):
                 raise
 
     async def common_watcher_handle_message(message):
-        if message.channel.id == settings.DEFAULT_TICKET_WATCHER_CHANNEL:
-            if not message.embeds:
-                return
-            embed = message.embeds[0]
-            if not embed:
-                return
-            embed_dict = embed.to_dict()
-
-            marketplace = ''
-            for index, field in enumerate(embed_dict['fields']):
-                if field['name'] == 'Server:':
-                    marketplace = field['value']
-                    embed.remove_field(index)
-
-            embed.timestamp = message.created_at
-
-            db = db_helper.mysql_get_mydb()
-            monitor_channels = db_helper.get_ticket_monitors(db, marketplace)
-            for monitor in monitor_channels:
-                try:
-                    guild = guild_helper.get_guild_by_id(client.guilds, int(monitor['guild_id']))
-                    channel = guild.get_channel(int(monitor['channel_id']))
-                    embed.set_footer(text=f"[{guild.name}]", icon_url=guild.icon_url)
-                    await channel.send(embed=embed)
-                except:
-                    print(f"UNABLE TO POST TICKET INTO CHANNEL {monitor['channel_id']} IN GUILD {monitor['guild_id']}")
+        # ticket monitor is not used, temporarily turning off
+        # if message.channel.id == settings.DEFAULT_TICKET_WATCHER_CHANNEL:
+        #     await handle_ticket_monitor(client, message)
 
         if message.channel.id == settings.DEFAULT_WATCHER_CHANNEL:
             if not message.embeds:
@@ -275,8 +262,14 @@ def main(argv):
             clean_embed.set_author(name=f"{embed.author.name} #{message_channel}", icon_url=embed.author.icon_url)
             clean_embed.timestamp = message.created_at
 
+            db = db_helper.mysql_get_mydb()
+            verified_guilds = db_helper.get_verified_guilds(db)
+
             for data in this.setup_data:
                 guild_id = list(data)[0]
+                if str(guild_id) not in verified_guilds:
+                    print(f"Non verified guild found: {guild_id}")
+                    return
                 setup = await setup_data_helper.get_data_by_id(guild_id)
                 channels = setup['channels']
                 channel_names = list(channels.keys())
@@ -355,6 +348,51 @@ def main(argv):
 
 async def send_webhook(message):
     await webhook_helper.send_webhook(message, this.TEST_MODE)
+
+
+async def is_verified_guild(message, command):
+    db = db_helper.mysql_get_mydb()
+    verified_guilds = db_helper.get_verified_guilds(db)
+    if str(message.guild.id) not in verified_guilds:
+        if command == 'help':
+            embed = discord.Embed(
+                title="",
+                description=f"**This server is not authorized to use this tool**\n"
+                            f"Join [MARKETEX SERVER](https://discord.gg/9XTKvHtJsP) to learn more about activation.",
+                color=settings.DEFAULT_EMBED_COLOR
+            )
+            await message.channel.send(embed=embed)
+        print(f"Non verified guild found: {message.guild.id} / {message.guild.name}")
+        return False
+    return True
+
+
+async def handle_ticket_monitor(client, message):
+    if not message.embeds:
+        return
+    embed = message.embeds[0]
+    if not embed:
+        return
+    embed_dict = embed.to_dict()
+
+    marketplace = ''
+    for index, field in enumerate(embed_dict['fields']):
+        if field['name'] == 'Server:':
+            marketplace = field['value']
+            embed.remove_field(index)
+
+    embed.timestamp = message.created_at
+
+    db = db_helper.mysql_get_mydb()
+    monitor_channels = db_helper.get_ticket_monitors(db, marketplace)
+    for monitor in monitor_channels:
+        try:
+            guild = guild_helper.get_guild_by_id(client.guilds, int(monitor['guild_id']))
+            channel = guild.get_channel(int(monitor['channel_id']))
+            embed.set_footer(text=f"[{guild.name}]", icon_url=guild.icon_url)
+            await channel.send(embed=embed)
+        except:
+            print(f"UNABLE TO POST TICKET INTO CHANNEL {monitor['channel_id']} IN GUILD {monitor['guild_id']}")
 
 
 if __name__ == "__main__":
