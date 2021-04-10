@@ -94,7 +94,8 @@ def main(argv):
                 del this.setup_data[index]
 
     async def bot_sales_handler(message):
-        if message.channel.id in [811971421840474202, 812308435331711026]:
+        # if message.channel.id in [811971421840474202, 812308435331711026]:
+        if message.channel.id == settings.SALES_LOGGER_CHANNEL_ID:
             if message.author.bot:
                 try:
                     message_embed = message.embeds[0].to_dict()
