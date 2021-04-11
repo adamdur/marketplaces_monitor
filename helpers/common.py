@@ -5,6 +5,7 @@ import math
 
 from currency_converter import CurrencyConverter
 from helpers import db as db_helper
+from helpers import redis as redis_helper
 
 
 def get_formatted_price(message):
@@ -72,12 +73,11 @@ def get_db_price(price):
     else:
         final_value = numeric_value.replace(' ', '')
 
-    matched_currency = ""
+    matched_currency = "$"
     for curr in currencies:
         if curr in price.lower():
             matched_currency = curr
-    if not matched_currency:
-        matched_currency = "$"
+            break
 
     converter = CurrencyConverter()
     if any(c in matched_currency.lower() for c in ['€', 'eur', 'euro']):
@@ -141,14 +141,16 @@ def get_bot_from_channel(channel_name):
 
 def build_status_message(bot, price, type, renewal):
     post_price = get_db_price(price)
-    db = db_helper.mysql_get_mydb()
-    avg_price = db_helper.get_average_price_by_bot(db, bot, type, renewal)
+    avg_price = redis_helper.get_bot_avg_price(f"{bot}__{type}__{'lt' if renewal == '1' else 'ren'}")
+    if not avg_price:
+        db = db_helper.mysql_get_mydb()
+        avg_price = db_helper.get_average_price_by_bot(db, bot, type, renewal)
+
     if not avg_price:
         return False
     avg_price = int(avg_price)
     percentage = (post_price - avg_price) / avg_price * 100
     icon = ''
-    notify = False
     if percentage > 0:
         trend = 'above'
     else:
@@ -161,18 +163,13 @@ def build_status_message(bot, price, type, renewal):
             icon = ':x:'
         elif type == 'wtb':
             icon = ':white_check_mark:'
-            if percentage > settings.NOTIFY_PERCENTAGE:
-                notify = True
     elif percentage < -5:
         if type == 'wts':
             icon = ':white_check_mark:'
-            if percentage < (settings.NOTIFY_PERCENTAGE * -1):
-                notify = True
         elif type == 'wtb':
             icon = ':x:'
 
     return {
-        'notify': notify,
         'message': '{} {:.2f}% {} average (${:.0f})'.format(icon, percentage, trend, avg_price)
     }
 

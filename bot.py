@@ -4,6 +4,7 @@ import settings
 import discord
 import shlex
 import re
+import redis
 
 from handlers import message_handler
 from handlers import message_handler_dm
@@ -13,6 +14,7 @@ from helpers import setup_data as setup_data_helper
 from helpers import channels as channels_helper
 from helpers import webhook as webhook_helper
 from helpers import db as db_helper
+from helpers import redis as redis_helper
 
 this = sys.modules[__name__]
 this.running = False
@@ -50,8 +52,10 @@ def main(argv):
         message = await setup_data_helper.get_file_content(message_file)
         open(message_file, "w").close()
 
-        db = db_helper.mysql_get_mydb()
-        verified_guilds = db_helper.get_verified_guilds(db)
+        verified_guilds = redis_helper.get_verified_guilds()
+        if not verified_guilds:
+            db = db_helper.mysql_get_mydb()
+            verified_guilds = db_helper.get_verified_guilds(db)
         for guild in client.guilds:
             if str(guild.id) not in verified_guilds:
                 print(f"!!! GUILD NOT VERIFIED {guild.id}: {guild.name} !!!")
@@ -205,7 +209,6 @@ def main(argv):
             price_str = ''
             price_level = ''
             is_lifetime = ''
-            remove_indexes = []
             for index, field in enumerate(embed_dict['fields']):
                 if field['name'] == 'Matched price:':
                     price_str = field['value']
@@ -219,21 +222,12 @@ def main(argv):
                     message_content = field['value']
                 elif field['name'] == 'Price level:':
                     price_level = field['value']
-                    remove_indexes.append(index)
                 elif field['name'] == 'Is lifetime:':
                     is_lifetime = field['value']
-                    remove_indexes.append(index)
-
-            # for remove_index in sorted(remove_indexes, key=int, reverse=True):
-            #     embed.remove_field(remove_index)
 
             final_types = common_helper.get_channel_types(message_channel, message_content)
-            if not final_types:
-                print('No type found: {}'.format(message_channel))
-
             final_bot = common_helper.get_bot_from_channel(message_channel)
             if not final_bot:
-                print('Bot not found: {}'.format(message_channel))
                 if not any(negative in message_channel for negative in settings.CHANNELS_NEGATIVE_IDENTIFIERS):
                     await send_webhook(f"@here \n Unknown bot channel found: **#{message_channel}**")
 
@@ -242,7 +236,6 @@ def main(argv):
                     final_bot = 'mekaio'
 
             final_channels = []
-            notify = False
             message_data = None
             if final_bot and final_types:
                 for type in final_types:
@@ -250,9 +243,6 @@ def main(argv):
                     if price_level and price_str:
                         if type in ['wts', 'wtb'] and int(price_level) == 1:
                             message_data = common_helper.build_status_message(final_bot, price_str, type, is_lifetime)
-                            if message_data:
-                                if message_data['notify'] is True:
-                                    notify = True
             clean_embed = discord.Embed(
                 title="",
                 description=f"{message_content}\n\n"
@@ -263,8 +253,10 @@ def main(argv):
             clean_embed.set_author(name=f"{embed.author.name} #{message_channel}", icon_url=embed.author.icon_url)
             clean_embed.timestamp = message.created_at
 
-            db = db_helper.mysql_get_mydb()
-            verified_guilds = db_helper.get_verified_guilds(db)
+            verified_guilds = redis_helper.get_verified_guilds()
+            if not verified_guilds:
+                db = db_helper.mysql_get_mydb()
+                verified_guilds = db_helper.get_verified_guilds(db)
 
             for data in this.setup_data:
                 guild_id = list(data)[0]
