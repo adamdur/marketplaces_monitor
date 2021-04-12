@@ -35,7 +35,7 @@ class Bids(BaseCommand):
 
         db = db_helper.mysql_get_mydb()
         bids = db_helper.get_bids(db, bot, renewal)
-        embed = discord.Embed(title=f"Lowest asks for {bot.upper()} {renewal_param.upper()}", description="", color=settings.DEFAULT_EMBED_COLOR)
+        embed = discord.Embed(title=f"Highest bids for {bot.upper()} {renewal_param.upper()}", description="", color=settings.DEFAULT_EMBED_COLOR)
         for bid in bids:
             embed.add_field(
                 name=f"{bid['marketplace']}",
