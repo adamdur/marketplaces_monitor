@@ -938,3 +938,45 @@ def insert_license(db, data):
     db.commit()
     db.close()
     return post
+
+
+def get_asks(db, bot, type, limit=10):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT price, marketplace, user_id, url FROM posts "
+             "WHERE bot = %s "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND type = 'wts' "
+             "GROUP BY user_id, price "
+             "ORDER BY price "
+             "LIMIT %s")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=2)
+
+    cursor.execute(query, (bot, type, last_day, limit))
+    asks = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return asks
+
+
+def get_bids(db, bot, type, limit=10):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT price, marketplace, user_id, url FROM posts "
+             "WHERE bot = %s "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND type = 'wtb' "
+             "GROUP BY user_id, price "
+             "ORDER BY price DESC "
+             "LIMIT %s")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=2)
+
+    cursor.execute(query, (bot, type, last_day, limit))
+    bids = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return bids

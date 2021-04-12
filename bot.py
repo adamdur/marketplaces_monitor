@@ -344,8 +344,10 @@ async def send_webhook(message):
 
 
 async def is_verified_guild(message, command):
-    db = db_helper.mysql_get_mydb()
-    verified_guilds = db_helper.get_verified_guilds(db)
+    verified_guilds = redis_helper.get_verified_guilds()
+    if not verified_guilds:
+        db = db_helper.mysql_get_mydb()
+        verified_guilds = db_helper.get_verified_guilds(db)
     if str(message.guild.id) not in verified_guilds:
         if command == 'help':
             embed = discord.Embed(

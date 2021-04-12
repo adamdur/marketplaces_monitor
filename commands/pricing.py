@@ -33,11 +33,12 @@ class Pricing(BaseCommand):
 
         renewal = common_helper.get_renewal_param_value(renewal_param)
 
+        waiting_message = await message.channel.send('Gathering data, please wait...')
         db = db_helper.mysql_get_mydb()
         data = db_helper.get_pricing(db, type, days, renewal)
 
         if not await errors_helper.check_db_response(data, message.channel):
-            return
+            return await waiting_message.delete()
 
         index = 1
         stats_str = ''
@@ -72,3 +73,4 @@ class Pricing(BaseCommand):
         embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
         embed.timestamp = message.created_at
         await message.channel.send(embed=embed)
+        await waiting_message.delete()

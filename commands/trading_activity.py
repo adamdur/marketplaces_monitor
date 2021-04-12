@@ -28,14 +28,15 @@ class Trading_activity(BaseCommand):
             if not await errors_helper.check_renewal_param(renewal_param, message.channel, guide=self.guide):
                 return
         renewal = common_helper.get_renewal_param_value(renewal_param)
+        waiting_message = await message.channel.send('Gathering data, please wait...')
 
         db = db_helper.mysql_get_mydb()
         data = db_helper.get_trading_activity(db, bot, renewal)
 
         if not data['current'] or not data['prev']:
-            return await message.channel.send(":exclamation: No sufficient data found. Try again later...")
+            return await waiting_message.edit(content=":exclamation: No sufficient data found for. Try again later...")
         if not await errors_helper.check_db_response(data, message.channel):
-            return
+            return await waiting_message.delete()
 
         wtb_count = wts_count = wtb_count_prev = wts_count_prev = 0
         wtb_price = wts_price = wtb_price_prev = wts_price_prev = 0
@@ -58,7 +59,7 @@ class Trading_activity(BaseCommand):
         total_count_prev = wtb_count_prev + wts_count_prev
 
         if total_count == 0 or total_count_prev == 0:
-            return await message.channel.send(":exclamation: No sufficient data found . Try again later...")
+            return await waiting_message.edit(content=":exclamation: No sufficient data found for. Try again later...")
 
         description = ""
         # if wtb_count == wts_count:
@@ -107,7 +108,8 @@ class Trading_activity(BaseCommand):
         embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
         embed.timestamp = message.created_at
 
-        return await message.channel.send(embed=embed)
+        await message.channel.send(embed=embed)
+        await waiting_message.delete()
 
 
 def round_price(x, base=10):

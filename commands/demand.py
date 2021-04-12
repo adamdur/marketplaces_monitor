@@ -28,11 +28,12 @@ class Demand(BaseCommand):
         if not await errors_helper.check_demand_type_param(type, message.channel, guide=self.guide):
             return
 
+        waiting_message = await message.channel.send('Gathering data, please wait...')
         db = db_helper.mysql_get_mydb()
         data = db_helper.get_posts_stats(db, type, days)
 
         if not await errors_helper.check_db_response(data, message.channel):
-            return
+            return await waiting_message.delete()
 
         MAX = 70
         MID = 35
@@ -81,3 +82,4 @@ class Demand(BaseCommand):
         embed.set_footer(text="[{}]".format(message.guild.name), icon_url=message.guild.icon_url)
         embed.timestamp = message.created_at
         await message.channel.send(embed=embed)
+        await waiting_message.delete()
