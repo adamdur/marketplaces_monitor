@@ -19,9 +19,6 @@ class Bids(BaseCommand):
         super().__init__(description, params, params_optional, guide)
 
     async def handle(self, params, params_optional, message, client):
-        if message.guild.id not in settings.MACHETE_SERVER:
-            return
-
         bot = common_helper.get_param_by_index(params, 0)
         renewal_param = common_helper.get_optional_param_by_index(params_optional, 0, "renewal")
 
