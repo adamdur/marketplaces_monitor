@@ -56,19 +56,24 @@ def main(argv):
         if not verified_guilds:
             db = db_helper.mysql_get_mydb()
             verified_guilds = db_helper.get_verified_guilds(db)
+        verified_str = "**Verified guilds:**\n"
+        unverified_str = "**Unverified guilds:**\n"
         for guild in client.guilds:
             if str(guild.id) not in verified_guilds:
-                print(f"!!! GUILD NOT VERIFIED {guild.id}: {guild.name} !!!")
+                unverified_str += f"`{guild.name}`\nid: {guild.id}, owner: {str(guild.owner)}\n"
             else:
-                print(f"GUILD VERIFIED {guild.id}: {guild.name}")
                 guild_data = await guild_helper.base_guild_setup(guild)
                 this.setup_data.append(guild_data)
                 commands_channel = next(iter(guild_data.values()))['commands_channel']
                 if commands_channel and message:
                     await commands_channel.send(message)
+                verified_str += f"`{guild.name}`\nid: {guild.id}, owner: {str(guild.owner)}\n"
+
+        verified_str += f"\n{unverified_str}"
 
         print("Everything set up... Watching marketplaces...")
         await send_webhook("Bot running")
+        await send_webhook(verified_str)
 
         # Load all events
         # print("Loading events...", flush=True)
@@ -86,8 +91,10 @@ def main(argv):
         db = db_helper.mysql_get_mydb()
         verified_guilds = db_helper.get_verified_guilds(db)
         if str(guild.id) not in verified_guilds:
+            await send_webhook(f"**Unverified guild join**\nguild_id: {guild.id}\nguild_name: {guild.name}\nowner: {str(guild.owner)}")
             return
         this.setup_data.append(await guild_helper.base_guild_setup(guild))
+        await send_webhook(f"**New guild join**\nguild_id: {guild.id}\nguild_name: {guild.name}\nowner: {str(guild.owner)}")
 
     @client.event
     async def on_guild_remove(guild):
