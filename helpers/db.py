@@ -18,8 +18,6 @@ def mysql_get_mydb():
     except mysql.Error as err:
         if err.errno == mysql.errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
-        elif err.errno == mysql.errorcode.ER_BAD_DV_ERROR:
-            print("Database does not exist")
         else:
             print(err)
     else:

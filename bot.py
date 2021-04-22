@@ -15,6 +15,7 @@ from helpers import channels as channels_helper
 from helpers import webhook as webhook_helper
 from helpers import db as db_helper
 from helpers import redis as redis_helper
+from commands.base_command import BaseCommand
 
 this = sys.modules[__name__]
 this.running = False
@@ -356,7 +357,8 @@ async def is_verified_guild(message, command):
         db = db_helper.mysql_get_mydb()
         verified_guilds = db_helper.get_verified_guilds(db)
     if str(message.guild.id) not in verified_guilds:
-        if command == 'help':
+        COMMAND_HANDLERS = {c.__name__.lower(): c() for c in BaseCommand.__subclasses__()}
+        if command in COMMAND_HANDLERS:
             embed = discord.Embed(
                 title="",
                 description=f"**This server is not authorized to use this tool**\n"
