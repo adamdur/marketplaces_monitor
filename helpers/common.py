@@ -8,11 +8,11 @@ from helpers import db as db_helper
 from helpers import redis as redis_helper
 
 
-def get_formatted_price(message):
+def get_formatted_price(message, content):
     regexp1 = '(usd|eur|gbp|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:( /|/|m| m|ren| ren)?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(usd|eur|gbp|k usd|k eur|k gbp|kusd|keur|kgbp|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k)(?:[/]?)(?:( /|/|m| m|ren| ren)?)'
     regexp2 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)\s?(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)'
 
-    message_content = message_content_filter(message)
+    message_content = message_content_filter(message, content)
     first_try = re.finditer(regexp1, message_content)
     match = ''
     level = 0
@@ -174,8 +174,8 @@ def build_status_message(bot, price, type, renewal):
     }
 
 
-def message_content_filter(message):
-    message_content = message.content.lower()
+def message_content_filter(message, content):
+    message_content = content.lower()
     if 'f3' in message.channel.name.lower():
         if 'f3' in message_content:
             message_content = message_content.replace("f3", "")
