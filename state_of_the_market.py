@@ -32,9 +32,11 @@ async def main(argv):
 
         current_price = sales['current']
         prev_price = sales['prev']
+        week_price = sales['prev_week']
         if current_price == 0:
             current_price = prev_price
         movement = round((current_price - prev_price) / prev_price * 100, 1)
+        movement_week = round((current_price - week_price) / week_price * 100, 1)
 
         bot_name = f"{sotm_bot['bot'].capitalize()}{' (' + sotm_bot['display_renewal'] + ')' if sotm_bot['display_renewal'] else ''}" \
                    f"{' ' + sotm_bot['icon'] if sotm_bot['icon'] else ''}"
@@ -57,34 +59,69 @@ async def main(argv):
         elif movement < 0:
             movement_str = f":chart_with_downwards_trend: {movement}%"
 
+        movement_str_week = ''
+        if movement_week == 0:
+            movement_str_week = ':turtle:'
+        elif movement_week > 0:
+            movement_str_week = f":chart_with_upwards_trend: +{movement_week}%"
+        elif movement_week < 0:
+            movement_str_week = f":chart_with_downwards_trend: {movement_week}%"
+
         formated_data.append({
             'bot': bot_name,
             'price': 'N/A' if price == 0 else price,
             'demand': demand_icon,
-            'movement': movement_str
+            'movement': movement_str,
+            'movement_week': movement_str_week
         })
 
-    embed = discord.Embed(title=f"STATE OF THE MARKET {date}", description="\u200b", color=settings.DEFAULT_EMBED_COLOR)
-    embed.set_image(url='https://i.imgur.com/ZeHPSNA.jpg')
-    embed.set_footer(text="Machete FNF", icon_url="https://pbs.twimg.com/profile_images/1348329578981421058/kGKg351L.jpg")
-    embed.timestamp = datetime.datetime.now()
-    for values in formated_data:
-        embed.add_field(
-            name=f"{values['bot']}",
-            value=f"**Price:** ${values['price']}\n"
-                  f"**Demand:** {values['demand']}\n"
-                  f"**Trend:** {values['movement']}\n\u200b",
-            inline=True
-        )
-
-    await send_webhook(embed)
-    print('Webhook sent. Took: {}'.format(time.time() - start))
+    chunk_data = chunks(formated_data, 24)
+    i = 1
+    now = datetime.datetime.now()
+    list_chunk = list(chunk_data)
+    count = (len(formated_data) % 24) % 3
+    if count == 0:
+        blank_fields_count = 0
+    else:
+        blank_fields_count = 3 - ((len(formated_data) % 24) % 3)
+    for chunk in list_chunk:
+        if i == 1:
+            embed = discord.Embed(title=f"STATE OF THE MARKET {date}", description="\u200b", color=settings.DEFAULT_EMBED_COLOR)
+        else:
+            embed = discord.Embed(title=f"", description="\u200b", color=settings.DEFAULT_EMBED_COLOR)
+        if i == len(list(list_chunk)):
+            embed.set_image(url='https://i.imgur.com/ZeHPSNA.jpg')
+            embed.set_footer(text="Machete FNF", icon_url="https://pbs.twimg.com/profile_images/1348329578981421058/kGKg351L.jpg")
+            embed.timestamp = now
+        else:
+            embed.set_image(url='https://i.ibb.co/V34vfJw/ZeHPSNA.jpg')
+        for values in chunk:
+            embed.add_field(
+                name=f"{values['bot']}",
+                value=f"**Price:** ${values['price']}\n"
+                      f"**Demand:** {values['demand']}\n"
+                      f"**Day:** {values['movement']}\n\u200b"
+                      f"**Week:** {values['movement_week']}\n\u200b",
+                inline=True
+            )
+        if i == len(list(list_chunk)):
+            for _ in range(blank_fields_count):
+                embed.add_field(name=f"\u200b", value=f"\u200b", inline=True)
+        i += 1
+        await send_webhook(embed)
+        time.sleep(1)
+    print(f"Webhook sent. Took: {time.time() - start}")
 
 ###############################################################################
 
 
 async def send_webhook(embed):
     await webhook_helper.sotm_webhook(embed)
+
+
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 
 if __name__ == "__main__":
