@@ -80,11 +80,11 @@ async def check_channel_type_param(param, channel, guide=None):
     return True
 
 
-async def check_days_param(param, channel, guide=None):
-    if not param.isdigit() or int(param) > settings.MAX_DAYS_DATA_CAPTURE:
+async def check_days_param(param, channel, guide=None, max_days=settings.MAX_DAYS_DATA_CAPTURE):
+    if not param.isdigit() or int(param) > max_days:
         embed = error_embed(
             title='Invalid days parameter',
-            description=f'Parameter of number of days must be number with max value of **{settings.MAX_DAYS_DATA_CAPTURE}**.',
+            description=f'Parameter of number of days must be number with max value of **{max_days}**.',
             guide=guide
         )
         await channel.send(embed=embed)

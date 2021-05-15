@@ -4,6 +4,8 @@ import numbers
 
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.cm as cm
+import operator as o
 
 BG_COLOR = '#2e3236'
 TEXT_COLOR = '#b9c3cc'
@@ -203,3 +205,86 @@ def get_list_average(lst):
         return sum(lst) / len(lst)
     except ZeroDivisionError:
         return 0
+
+
+def create_bar_chart_demand(data, bot):
+    dpoints = np.array(data)
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+
+    fig, ax = plt.subplots(figsize=(30, 10))
+    title_obj = plt.title('Marketplaces pricing stats{}'.format(' for ' + bot.capitalize() if bot else ''), fontsize=20)
+    plt.setp(title_obj, color=TEXT_COLOR)
+
+    '''
+    Create a barchart for data across different categories with
+    multiple conditions for each category.
+
+    @param ax: The plotting axes from matplotlib.
+    @param dpoints: The data set as an (n, 3) numpy array
+    '''
+
+    # Aggregate the conditions and the categories according to their
+    # mean values
+    conditions = [(c, np.mean(dpoints[dpoints[:, 0] == c][:, 2].astype(float))) for c in np.unique(dpoints[:, 0])]
+    categories = [(c, np.mean(dpoints[dpoints[:, 1] == c][:, 2].astype(float))) for c in np.unique(dpoints[:, 1])]
+    conditions = [c[0] for c in conditions]
+    categories = [c[0] for c in categories]
+
+    dpoints = np.array(sorted(dpoints, key=lambda x: categories.index(x[1])))
+
+    # the space between each set of bars
+    space = 0.3
+    n = len(conditions)
+    width = (1 - space) / (len(conditions))
+
+    rects = []
+    # Create a set of bars at each position
+    for i, cond in enumerate(conditions):
+        print(i)
+        print(cond)
+        indeces = range(1, len(categories)+1)
+        vals = dpoints[dpoints[:, 0] == cond][:, 2].astype(np.float)
+        pos = [j - (1 - space) / 4 + i * width for j in indeces]
+        # pos = [j - space * width for j in indeces]
+        bar = ax.bar(pos, vals, width=width, label=cond, color=RED_COLOR if cond == 'wts' else GREEN_COLOR)
+        rects.append(bar)
+
+    for rectsarr in rects:
+        for rect in rectsarr:
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width()/2., height + 0.1, '%d' % int(height), ha='center', va='bottom', color=TEXT_COLOR)
+
+    y = np.array(range(1, len(indeces)+1))
+    x = np.arange(y.shape[0])
+    frequency = round(len(indeces)/10)
+    # Set the x-axis tick labels to be equal to the categories
+    ax.set_xticks(indeces)
+    # ax.set_xticks(x[::frequency])
+    # ax.set_xticklabels(categories[::frequency])
+    ax.set_xticklabels(categories)
+    plt.setp(plt.xticks()[1], rotation=90)
+
+    # Add the axis labels
+    ax.set_ylabel("RMSD")
+    ax.set_xlabel("Structure")
+    ax.tick_params(axis='y', labelsize=14, length=10, color=GRID_COLOR, labelcolor=TEXT_COLOR)
+    ax.tick_params(axis='x', labelsize=14, length=10, color=GRID_COLOR, labelcolor=TEXT_COLOR, labelrotation=65)
+    ax.set_facecolor(BG_COLOR)
+    ax.grid(color=GRID_COLOR)
+    ax.legend()
+    ax.spines['bottom'].set_color(TEXT_COLOR)
+    ax.spines['top'].set_color(TEXT_COLOR)
+    ax.spines['left'].set_color(TEXT_COLOR)
+    ax.spines['right'].set_color(TEXT_COLOR)
+
+    # Add a legend
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[::-1], labels[::-1], loc='upper left')
+    fig.patch.set_facecolor(BG_COLOR)
+    timestamp = int(round(time.time() * 1000))
+    filename = 'graph{}.png'.format(timestamp)
+    filepath = settings.BASE_DIR + '/tmp/{}'.format(filename)
+    fig.savefig(filepath, bbox_inches='tight')
+    return filepath

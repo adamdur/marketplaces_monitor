@@ -18,8 +18,6 @@ def mysql_get_mydb():
     except mysql.Error as err:
         if err.errno == mysql.errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
-        elif err.errno == mysql.errorcode.ER_BAD_DV_ERROR:
-            print("Database does not exist")
         else:
             print(err)
     else:
@@ -744,7 +742,8 @@ def get_sotm_commands(db):
 def get_sotm_bots(db):
     cursor = db.cursor(dictionary=True)
     query = "SELECT * FROM market_state " \
-            "WHERE active = 1 "
+            "WHERE active = 1 " \
+            "ORDER BY bot"
     cursor.execute(query)
     commands = cursor.fetchall()
     db.commit()
@@ -754,6 +753,7 @@ def get_sotm_bots(db):
 
 def get_sotm_bot_sales(db, bot, renewal, date):
     prev_date = date - datetime.timedelta(days=1)
+    week_date = date - datetime.timedelta(days=7)
     cursor = db.cursor(dictionary=True)
     query = "SELECT AVG(price) average FROM sales " \
             "WHERE bot LIKE %s " \
@@ -780,11 +780,35 @@ def get_sotm_bot_sales(db, bot, renewal, date):
         cursor.execute(new_query, (f"%{bot}%", date))
         prev = cursor.fetchall()
 
+    week_query = "SELECT AVG(price) average FROM sales " \
+                 "WHERE bot LIKE %s " \
+                 "AND price != 0 " \
+                 "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
+                 "AND date < %s " \
+                 "AND date >= %s " \
+                 "HAVING AVG(price) > 0 "
+    cursor.execute(week_query, (f"%{bot}%", date, week_date))
+    prev_week = cursor.fetchall()
+
+    if not prev_week:
+        new_query = "SELECT AVG(price) average FROM sales " \
+                    "WHERE bot LIKE %s " \
+                    "AND price != 0 " \
+                    "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
+                    "AND date < %s " \
+                    "GROUP BY date " \
+                    "HAVING AVG(price) > 0 " \
+                    "ORDER BY date DESC " \
+                    "LIMIT 1"
+        cursor.execute(new_query, (f"%{bot}%", date))
+        prev_week = cursor.fetchall()
+
     db.commit()
     db.close()
     return {
         'current': current[0]['average'] if current[0]['average'] else 0,
-        'prev': prev[0]['average'] if prev[0]['average'] else 0
+        'prev': prev[0]['average'] if prev[0]['average'] else 0,
+        'prev_week': prev_week[0]['average'] if prev_week and prev_week[0]['average'] else 0,
     }
 
 
@@ -887,3 +911,252 @@ def renewal_helper(renewal):
         return renewal.split('/')[0].replace('$', '').replace('€', '').replace('£', '').strip()
     else:
         return renewal
+
+
+def get_verified_guilds(db):
+    cursor = db.cursor()
+    query = "SELECT server FROM licenses WHERE active = 1"
+
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return list(map(lambda x: x[0], data))
+
+
+def get_licenses(db, active=False):
+    cursor = db.cursor()
+    query = "SELECT * FROM licenses WHERE active = %s"
+
+    cursor.execute(query, active)
+    data = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def get_license(db, license_key):
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT * FROM licenses WHERE license = %s"
+
+    cursor.execute(query, (license_key,))
+    data = cursor.fetchone()
+
+    db.commit()
+    db.close()
+    return data
+
+
+def insert_license(db, data):
+    cursor = db.cursor(dictionary=True)
+    insert_query = (
+        "INSERT INTO licenses (license, server, user_name, user_id, active, created_at, updated_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s)")
+    now = datetime.datetime.now()
+    data.extend([now, now])
+    cursor.execute(insert_query, data)
+    post = cursor.lastrowid
+
+    db.commit()
+    db.close()
+    return post
+
+
+def get_asks(db, bot, type, limit=10):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT price, marketplace, user_id, url FROM posts "
+             "WHERE bot = %s "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND type = 'wts' "
+             "GROUP BY user_id, price "
+             "ORDER BY price "
+             "LIMIT %s")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=2)
+
+    cursor.execute(query, (bot, type, last_day, limit))
+    asks = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return asks
+
+
+def get_bids(db, bot, type, limit=10):
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT price, marketplace, user_id, url FROM posts "
+             "WHERE bot = %s "
+             "AND is_lifetime = %s "
+             "AND created_at > %s "
+             "AND type = 'wtb' "
+             "GROUP BY user_id, price "
+             "ORDER BY price DESC "
+             "LIMIT %s")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=2)
+
+    cursor.execute(query, (bot, type, last_day, limit))
+    bids = cursor.fetchall()
+
+    db.commit()
+    db.close()
+    return bids
+
+
+def get_ticket_stats(db, days=1):
+    invalid_params_arr = [
+        'topshot',
+        'bmr',
+        'trade',
+        'help',
+        'enjuu',
+        '.',
+        'question',
+        'earthy',
+        'report',
+        'support',
+        'rental',
+        'a',
+        'ticket',
+        'hamza',
+        'mm',
+        'bot',
+        'scam',
+        'membership'
+    ]
+    cursor = db.cursor(dictionary=True)
+    query = ("SELECT params, COUNT(id) AS count FROM tickets "
+             "WHERE params != '' "
+             "AND created_at > %s "
+             "AND created_at < %s "
+             "GROUP BY params "
+             "ORDER BY count DESC, params ASC")
+    now = datetime.datetime.now()
+    last_day = now - datetime.timedelta(days=days)
+
+    query2 = ("SELECT guild_name, COUNT(id) count FROM tickets "
+              "WHERE params != '' "
+              "AND created_at > %s "
+              "AND created_at < %s "
+              "GROUP BY guild_id "
+              "ORDER BY count DESC")
+
+    cursor.execute(query, (last_day, now))
+    data = cursor.fetchall()
+    cursor.execute(query2, (last_day, now))
+    data2 = cursor.fetchall()
+
+    tickets = {}
+
+    for ticket in data:
+        param = ticket['params']
+        if param in invalid_params_arr:
+            continue
+        if 'rental' in param or 'trade' in param:
+            continue
+        if len(param) < 3:
+            continue
+        if param.startswith('<'):
+            continue
+
+        try:
+            tickets[param] = tickets[param] + ticket['count']
+        except KeyError:
+            tickets[param] = ticket['count']
+
+    db.commit()
+    db.close()
+    return {
+        'bots': tickets,
+        'guilds': data2
+    }
+
+
+def get_demand_activity(db, bot, renewal):
+    cursor = db.cursor(dictionary=True)
+    # query = ("SELECT bot, COUNT(*) AS count, COUNT(DISTINCT user_id) unique_users "
+    #          "FROM posts "
+    #          "WHERE bot != '0' "
+    #          "AND type = %s "
+    #          "AND created_at > %s "
+    #          "AND created_at < %s "
+    #          "GROUP BY bot "
+    #          "ORDER BY unique_users DESC ")
+    query_graph = ("SELECT type, bot, COUNT(DISTINCT user_id) unique_users, DATE_FORMAT(created_at, '%Y-%m-%d %H:00') as hour FROM posts "
+                   "WHERE bot = %s "
+                   "AND type IN ('wts', 'wtb') "
+                   "AND is_lifetime = %s "
+                   # "AND created_at >= %s "
+                   # "AND created_at <= %s "
+                   # "GROUP BY type, date "
+                   "AND DATE_FORMAT(created_at, '%Y-%m-%d %H:00') >= %s "
+                   "AND DATE_FORMAT(created_at, '%Y-%m-%d %H:00') <= %s "
+                   "GROUP BY type, hour "
+                   "ORDER BY hour ASC")
+    # now = datetime.datetime.now()
+    now = datetime.datetime.now() - datetime.timedelta(hours=int(1))
+    last_day = now - datetime.timedelta(hours=int(24))
+    now = now.strftime("%Y-%m-%d %H:00")
+    last_day = last_day.strftime("%Y-%m-%d %H:00")
+
+    cursor.execute(query_graph, (bot, renewal, last_day, now))
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+
+    DATE_TIME_STRING_FORMAT = '%Y-%m-%d %H:00'
+    from_date_time = datetime.datetime.strptime(last_day, DATE_TIME_STRING_FORMAT)
+    to_date_time = datetime.datetime.strptime(now, DATE_TIME_STRING_FORMAT)
+
+    date_times = [from_date_time.strftime(DATE_TIME_STRING_FORMAT)]
+    date_time = from_date_time
+    while date_time < to_date_time:
+        date_time += datetime.timedelta(hours=1)
+        date_times.append(date_time.strftime(DATE_TIME_STRING_FORMAT))
+
+    # date_times.reverse()
+    formatted_data = {}
+    for row in data:
+        formatted_data[f"{row['type']}__{row['hour']}"] = row['unique_users']
+
+    full_data = []
+    for date in date_times:
+        try:
+            row_data_wts = ['wts', date, formatted_data[f"wts__{date}"]]
+        except KeyError:
+            row_data_wts = ['wts', date, 0]
+        try:
+            row_data_wtb = ['wtb', date, formatted_data[f"wtb__{date}"]]
+        except KeyError:
+            row_data_wtb = ['wtb', date, 0]
+        full_data.append(row_data_wtb)
+        full_data.append(row_data_wts)
+
+    # print(full_data)
+
+    return full_data
+
+    full_data = []
+    hours = []
+    wtb = []
+    wts = []
+    print(data)
+    for row in data:
+        row_data = [row['type'], f"{row['hour']}:00", row['unique_users']]
+        hours.append(f"{row['hour']}:00")
+        if row['type'] == 'wtb':
+            wtb.append(row['unique_users'])
+        if row['type'] == 'wts':
+            wts.append(row['unique_users'])
+        # full_data.append(row_data)
+
+    # print(full_data)
+
+    return {
+        'xlabels': list(set(hours)),
+        'wtb': wtb,
+        'wts': wts
+    }

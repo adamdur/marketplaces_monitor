@@ -5,13 +5,14 @@ import math
 
 from currency_converter import CurrencyConverter
 from helpers import db as db_helper
+from helpers import redis as redis_helper
 
 
-def get_formatted_price(message):
+def get_formatted_price(message, content):
     regexp1 = '(usd|eur|gbp|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)(?:( /|/|m| m|ren| ren)?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)(usd|eur|gbp|k usd|k eur|k gbp|kusd|keur|kgbp|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k)(?:[/]?)(?:( /|/|m| m|ren| ren)?)'
     regexp2 = '(USD|EUR|€|\$|£)(\d{1,}(?:[.,]\d{3})*(?:[.,]\d{2}))*(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})*([k])?)|(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2})*(?:[.,]\d{1})?)\s?(USD|EUR|GBP|k USD|k EUR|k GBP|kUSD|kEUR|kGBP|€|\$|£|k€|k\$|k£|k €|k \$|k £|k| k|K| K|eur|euro|EURO)'
 
-    message_content = message_content_filter(message)
+    message_content = message_content_filter(message, content)
     first_try = re.finditer(regexp1, message_content)
     match = ''
     level = 0
@@ -72,12 +73,11 @@ def get_db_price(price):
     else:
         final_value = numeric_value.replace(' ', '')
 
-    matched_currency = ""
+    matched_currency = "$"
     for curr in currencies:
         if curr in price.lower():
             matched_currency = curr
-    if not matched_currency:
-        matched_currency = "$"
+            break
 
     converter = CurrencyConverter()
     if any(c in matched_currency.lower() for c in ['€', 'eur', 'euro']):
@@ -141,14 +141,16 @@ def get_bot_from_channel(channel_name):
 
 def build_status_message(bot, price, type, renewal):
     post_price = get_db_price(price)
-    db = db_helper.mysql_get_mydb()
-    avg_price = db_helper.get_average_price_by_bot(db, bot, type, renewal)
+    avg_price = redis_helper.get_bot_avg_price(f"{bot}__{type}__{'lt' if renewal == '1' else 'ren'}")
+    if not avg_price:
+        db = db_helper.mysql_get_mydb()
+        avg_price = db_helper.get_average_price_by_bot(db, bot, type, renewal)
+
     if not avg_price:
         return False
     avg_price = int(avg_price)
     percentage = (post_price - avg_price) / avg_price * 100
     icon = ''
-    notify = False
     if percentage > 0:
         trend = 'above'
     else:
@@ -161,24 +163,19 @@ def build_status_message(bot, price, type, renewal):
             icon = ':x:'
         elif type == 'wtb':
             icon = ':white_check_mark:'
-            if percentage > settings.NOTIFY_PERCENTAGE:
-                notify = True
     elif percentage < -5:
         if type == 'wts':
             icon = ':white_check_mark:'
-            if percentage < (settings.NOTIFY_PERCENTAGE * -1):
-                notify = True
         elif type == 'wtb':
             icon = ':x:'
 
     return {
-        'notify': notify,
         'message': '{} {:.2f}% {} average (${:.0f})'.format(icon, percentage, trend, avg_price)
     }
 
 
-def message_content_filter(message):
-    message_content = message.content.lower()
+def message_content_filter(message, content):
+    message_content = content.lower()
     if 'f3' in message.channel.name.lower():
         if 'f3' in message_content:
             message_content = message_content.replace("f3", "")
