@@ -31,7 +31,7 @@ class Trading_activity(BaseCommand):
         waiting_message = await message.channel.send('Gathering data, please wait...')
 
         db = db_helper.mysql_get_mydb()
-        data = db_helper.get_trading_activity(db, bot, renewal)
+        data = db_helper.get_trading_activity_slim(db, bot, renewal)
 
         if not data['current'] or not data['prev']:
             return await waiting_message.edit(content=":exclamation: No sufficient data found for. Try again later...")

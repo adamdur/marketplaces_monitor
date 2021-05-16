@@ -34,7 +34,7 @@ class Graph_demand(BaseCommand):
 
         waiting_message = await message.channel.send('Gathering data, please wait...')
         db = db_helper.mysql_get_mydb()
-        data = db_helper.get_graph_data_demand(db, bot, renewal)
+        data = db_helper.get_graph_data_demand_slim(db, bot, renewal)
 
         if not await errors_helper.check_db_response(data, message.channel):
             return await waiting_message.delete()
@@ -45,11 +45,11 @@ class Graph_demand(BaseCommand):
         filename = filepath.rsplit('/', 1)[-1]
         file = discord.File(filepath, filename=filename)
 
-        wts_average_all = graph_helper.get_list_average(data['wts'])
-        wts_average_week = graph_helper.get_list_average(data['wts'][-7:])
+        wts_average_all = graph_helper.get_list_average(data['wts_users'])
+        wts_average_week = graph_helper.get_list_average(data['wts_users'][-7:])
         wts_average_day = round(data['wts_day'], 0) if data['wts_day'] else None
-        wtb_average_all = graph_helper.get_list_average(data['wtb'])
-        wtb_average_week = graph_helper.get_list_average(data['wtb'][-7:])
+        wtb_average_all = graph_helper.get_list_average(data['wtb_users'])
+        wtb_average_week = graph_helper.get_list_average(data['wtb_users'][-7:])
         wtb_average_day = round(data['wtb_day'], 0) if data['wtb_day'] else None
 
         if not wts_average_all and not wts_average_week and not wts_average_day \

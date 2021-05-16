@@ -34,7 +34,7 @@ class Graph_pricing(BaseCommand):
 
         waiting_message = await message.channel.send('Gathering data, please wait...')
         db = db_helper.mysql_get_mydb()
-        data = db_helper.get_graph_data_pricing(db, bot, renewal)
+        data = db_helper.get_graph_data_pricing_slim(db, bot, renewal)
         sales_data = False
         if message.guild.id in settings.MACHETE_SERVER:
             db = db_helper.mysql_get_mydb()
