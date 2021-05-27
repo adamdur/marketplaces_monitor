@@ -167,6 +167,11 @@ def main(argv):
                             'price': price.replace('$', '')
                         })
                 if data:
+                    idx = 0
+                    for row in data:
+                        new_bot_name = handle_bot_name(data[0]['bot'])
+                        data[idx]['bot'] = new_bot_name
+                        idx += 1
                     db = db_helper.mysql_get_mydb()
                     logged = db_helper.log_sale(db, data)
 
@@ -345,6 +350,52 @@ def main(argv):
     client.run(token)
 
 ###############################################################################
+
+
+def handle_bot_name(bot):
+    if bot in ['burstaio']:
+        bot = 'burst'
+    elif bot in ['eveaio']:
+        bot = 'eve'
+    elif bot in ['f3ather', 'f3atherio']:
+        bot = 'f3'
+    elif bot in ['fleekframework']:
+        bot = 'fleek'
+    elif bot in ['ganeshbot']:
+        bot = 'ganesh'
+    elif bot in ['kageaio']:
+        bot = 'kage'
+    elif bot in ['mekpreme']:
+        bot = 'mek'
+    elif bot in ['mercury']:
+        bot = 'mek'
+    elif bot in ['polarisaio']:
+        bot = 'polaris'
+    elif bot in ['prismaio']:
+        bot = 'prism'
+    elif bot in ['rushaio']:
+        bot = 'rush'
+    elif bot in ['splashforce']:
+        bot = 'sf'
+    elif bot in ['splashforce']:
+        bot = 'sf'
+    elif bot in ['soleaio']:
+        bot = 'sole'
+    elif bot in ['torpedoaio']:
+        bot = 'torpedo'
+    elif bot in ['veloxpreme']:
+        bot = 'velox'
+    elif bot in ['balkobot']:
+        bot = 'balko'
+    elif bot in ['flareaio']:
+        bot = 'flare'
+    elif bot in ['kiloaio']:
+        bot = 'kilo'
+    elif bot in ['koisolutions']:
+        bot = 'koi'
+    elif bot in ['lexaio']:
+        bot = 'lex'
+    return bot
 
 
 async def send_webhook(message):

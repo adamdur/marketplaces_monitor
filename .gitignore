@@ -140,4 +140,5 @@ messages
 operations
 logs
 backup_commands
+backup_commands_dm
 /notes.txt
