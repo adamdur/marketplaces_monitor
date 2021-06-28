@@ -287,16 +287,16 @@ def main(argv):
                     print(f"Non verified guild found: {guild_id}")
                     return
 
-                if guild_id == '726811962742407211':
-                    if user_id in SPAMMERS:
-                        print(f"SPAMMER POST FOUND {user_id}")
-                        return
-
                 setup = await setup_data_helper.get_data_by_id(guild_id)
                 channels = setup['channels']
                 channel_names = list(channels.keys())
                 guild_data = guild_helper.get_guild_by_id(client.guilds, int(guild_id))
                 clean_embed.set_footer(text=f"[{guild_data.name}]", icon_url=guild_data.icon_url)
+
+                if guild_id == '726811962742407211':
+                    if user_id in SPAMMERS:
+                        print(f"SKIPPING SPAMMER MESSAGE IN {guild_data.name} / USER_ID {user_id}")
+                        return
 
                 kw_channels = await setup_data_helper.get_keyword_channels(channels)
                 for idx, kw_channel in kw_channels.items():
