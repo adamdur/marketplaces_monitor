@@ -373,7 +373,7 @@ def get_graph_sales(db, bot):
     last_day = now
     start = now - datetime.timedelta(days=int(settings.GRAPH_DATA_DAYS))
 
-    cursor.execute(query, (f"%{bot}%", start, last_day))
+    cursor.execute(query, (f"{bot}", start, last_day))
     data = cursor.fetchall()
 
     base = datetime.datetime.today()
