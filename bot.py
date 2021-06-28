@@ -295,7 +295,7 @@ def main(argv):
 
                 if guild_id == '726811962742407211':
                     if user_id in SPAMMERS:
-                        print(f"SKIPPING SPAMMER MESSAGE IN {guild_data.name} / USER_ID {user_id}")
+                        print(f"SKIPPING SPAMMER MESSAGE IN {guild_data.name} / USER_ID {user_id} / {message_posted_in if message_posted_in else 'unknwn'}")
                         return
 
                 kw_channels = await setup_data_helper.get_keyword_channels(channels)
