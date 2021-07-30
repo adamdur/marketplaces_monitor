@@ -93,6 +93,14 @@ def handle_bot_name(bot):
         bot = 'koi'
     elif bot in ['lexaio']:
         bot = 'lex'
+    elif bot in ['ominousaio']:
+        bot = 'ominous'
+    elif bot in ['valoraio']:
+        bot = 'valor'
+    elif bot in ['viperbot']:
+        bot = 'viper'
+    elif bot in ['zenyscripts']:
+        bot = 'zeny'
     return bot
 
 
