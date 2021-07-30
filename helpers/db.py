@@ -1,6 +1,7 @@
 import settings
 import mysql.connector as mysql
 import datetime
+import redis
 from decimal import Decimal
 
 from helpers import common as common_helper
@@ -360,7 +361,7 @@ def get_graph_sales(db, bot):
         bot = 'mekpreme'
     cursor = db.cursor(dictionary=True)
     query = "SELECT AVG(price) average, renewal, date FROM sales " \
-            "WHERE bot LIKE %s " \
+            "WHERE bot = %s " \
             "AND price != 0 " \
             "AND date >= %s " \
             "AND date <= %s " \
@@ -372,7 +373,7 @@ def get_graph_sales(db, bot):
     last_day = now
     start = now - datetime.timedelta(days=int(settings.GRAPH_DATA_DAYS))
 
-    cursor.execute(query, (f"%{bot}%", start, last_day))
+    cursor.execute(query, (f"{bot}", start, last_day))
     data = cursor.fetchall()
 
     base = datetime.datetime.today()
@@ -1314,4 +1315,152 @@ def get_demand_activity(db, bot, renewal):
         'xlabels': list(set(hours)),
         'wtb': wtb,
         'wts': wts
+    }
+
+
+def save_spammers_to_cache(db):
+    cursor = db.cursor()
+    query = (
+        "SELECT user_id "
+        "FROM users_info "
+        "WHERE state = 'flipper' "
+    )
+
+    cursor.execute(query)
+    data = cursor.fetchall()
+    spammers = list(map(lambda x: x[0], data))
+    r = redis.StrictRedis('localhost', decode_responses=True)
+    r.delete('spammers')
+    r.lpush('spammers', *spammers)
+    return
+
+
+def get_daily_recap(db, days=1):
+    cursor = db.cursor(dictionary=True)
+    today_query = (
+        "SELECT bot, type, users_count, avg_price, date "
+        "FROM posts_slim "
+        "WHERE type IN ('wts', 'wtb') "
+        "AND lifetime = 0 "
+        "AND date = %s "
+        "ORDER BY bot ASC"
+    )
+    compare_query = (
+        "SELECT bot, type, AVG(users_count) users_count, AVG(avg_price) avg_price, date "
+        "FROM posts_slim "
+        "WHERE type IN ('wts', 'wtb') "
+        "AND lifetime = 0 "
+        "AND date >= %s "
+        "AND date <= %s "
+        "GROUP BY bot, type "
+        "ORDER BY bot ASC"
+    )
+    today = datetime.date.today() - datetime.timedelta(days=1)
+    yesterday = today - datetime.timedelta(days=int(1))
+    start = today - datetime.timedelta(days=int(days))
+
+    cursor.execute(today_query, (today, ))
+    today_data = cursor.fetchall()
+    cursor.execute(compare_query, (start, yesterday))
+    compare_data = cursor.fetchall()
+
+    today_data_paired = {}
+    compare_data_paired = {}
+    for row in today_data:
+        today_data_paired[f"{row['bot']}__{row['type']}"] = row
+    for row in compare_data:
+        compare_data_paired[f"{row['bot']}__{row['type']}"] = row
+
+    bots = list(settings.ALLOWED_BOTS.keys())
+
+    data = {}
+    for bot in bots:
+        try:
+            today_wts = today_data_paired[f"{bot}__wts"]
+        except KeyError:
+            today_wts = False
+        try:
+            compare_wts = compare_data_paired[f"{bot}__wts"]
+        except KeyError:
+            compare_wts = False
+        try:
+            today_wtb = today_data_paired[f"{bot}__wtb"]
+        except KeyError:
+            today_wtb = False
+        try:
+            compare_wtb = compare_data_paired[f"{bot}__wtb"]
+        except KeyError:
+            compare_wtb = False
+        if not today_wts or not today_wtb or not compare_wts or not compare_wtb:
+            continue
+
+        wtb_cnt = today_wtb['users_count'] if today_wtb else 0
+        wtb_cnt_prev = compare_wtb['users_count'] if compare_wtb else 0
+        wts_cnt = today_wts['users_count'] if today_wts else 0
+        wts_cnt_prev = compare_wts['users_count'] if compare_wts else 0
+
+        wtb_price = today_wtb['avg_price'] if today_wtb else 0
+        wtb_price_prev = compare_wtb['avg_price'] if compare_wtb else 0
+        wts_price = today_wts['avg_price'] if today_wts else 0
+        wts_price_prev = compare_wts['avg_price'] if compare_wts else 0
+
+        movement_cnt_wtb = 0 if wtb_cnt_prev == 0 else round((wtb_cnt - wtb_cnt_prev) / wtb_cnt_prev * 100, 1)
+        movement_cnt_wts = 0 if wts_cnt_prev == 0 else round((wts_cnt - wts_cnt_prev) / wts_cnt_prev * 100, 1)
+        movement_price_wtb = 0 if wtb_price_prev == 0 else round((wtb_price - wtb_price_prev) / wtb_price_prev * 100, 1)
+        movement_price_wts = 0 if wts_price_prev == 0 else round((wts_price - wts_price_prev) / wts_price_prev * 100, 1)
+        # movement_cnt_wtb = round((wtb_cnt - wtb_cnt_prev) / wtb_cnt_prev * 100, 2)
+        # movement_cnt_wts = round((wts_cnt - wts_cnt_prev) / wts_cnt_prev * 100, 2)
+        # movement_price_wtb = round((wtb_price - wtb_price_prev) / wtb_price_prev * 100, 2)
+        # movement_price_wts = round((wts_price - wts_price_prev) / wts_price_prev * 100, 2)
+        data[bot] = {
+            'movement_cnt_wtb': movement_cnt_wtb,
+            'movement_cnt_wts': movement_cnt_wts,
+            'movement_price_wtb': movement_price_wtb,
+            'movement_price_wts': movement_price_wts,
+            'wtb_cnt': round(wtb_cnt),
+            'wtb_cnt_prev': round(wtb_cnt_prev),
+            'wts_cnt': round(wts_cnt),
+            'wts_cnt_prev': round(wts_cnt_prev),
+            'wtb_price': round(wtb_price),
+            'wtb_price_prev': round(wtb_price_prev),
+            'wts_price': round(wts_price),
+            'wts_price_prev': round(wts_price_prev),
+        }
+
+    return data
+
+    date_list = [today - datetime.timedelta(days=x) for x in range(settings.GRAPH_DATA_DAYS + 1)]
+    date_list.reverse()
+
+    data = {}
+    for row in data_graph:
+        data[f"{row['type']}__{row['date']}"] = row
+
+    xlabels, wts_price, wtb_price = [], [], []
+    wts_day, wtb_day = None, None
+    for date in date_list:
+        try:
+            wts = data[f"wts__{date}"]
+        except KeyError:
+            wts = {'avg_price': 0}
+        try:
+            wtb = data[f"wtb__{date}"]
+        except KeyError:
+            wtb = {'avg_price': 0}
+
+        if date == today:
+            wts_day = wts['avg_price']
+            wtb_day = wtb['avg_price']
+            continue
+
+        wts_price.append(wts['avg_price'])
+        wtb_price.append(wtb['avg_price'])
+        xlabels.append(date.strftime("%Y/%m/%d"))
+
+    return {
+        'xlabels': xlabels,
+        'wts': wts_price,
+        'wtb': wtb_price,
+        'wts_day': wts_day,
+        'wtb_day': wtb_day
     }

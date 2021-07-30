@@ -35,6 +35,10 @@ def main(argv):
             print('[USING TEST MODE]')
             this.TEST_MODE = True
             token = settings.BOT_TEST_TOKEN
+
+    db = db_helper.mysql_get_mydb()
+    db_helper.save_spammers_to_cache(db)
+    SPAMMERS = redis_helper.get_spammers()
     client = discord.Client()
 
     @client.event
@@ -238,6 +242,12 @@ def main(argv):
                 elif field['name'] == 'Is lifetime:':
                     is_lifetime = field['value']
 
+            dic = {'<': '', '>': '', '@': '', '!': ''}
+            user_id = message_user
+            if user_id:
+                for i, j in dic.items():
+                    user_id = user_id.replace(i, j)
+
             final_types = common_helper.get_channel_types(message_channel, message_content)
             final_bot = common_helper.get_bot_from_channel(message_channel)
             if not final_bot:
@@ -276,11 +286,17 @@ def main(argv):
                 if str(guild_id) not in verified_guilds:
                     print(f"Non verified guild found: {guild_id}")
                     return
+
                 setup = await setup_data_helper.get_data_by_id(guild_id)
                 channels = setup['channels']
                 channel_names = list(channels.keys())
                 guild_data = guild_helper.get_guild_by_id(client.guilds, int(guild_id))
                 clean_embed.set_footer(text=f"[{guild_data.name}]", icon_url=guild_data.icon_url)
+
+                if guild_id == '726811962742407211':
+                    if user_id in SPAMMERS:
+                        print(f"SKIPPING SPAMMER MESSAGE IN {guild_data.name} / USER_ID {user_id} / {message_posted_in if message_posted_in else 'unknwn'}")
+                        return
 
                 kw_channels = await setup_data_helper.get_keyword_channels(channels)
                 for idx, kw_channel in kw_channels.items():
@@ -367,16 +383,14 @@ def handle_bot_name(bot):
         bot = 'kage'
     elif bot in ['mekpreme']:
         bot = 'mek'
-    elif bot in ['mercury']:
-        bot = 'mek'
+    elif bot in ['mercuryaio']:
+        bot = 'mercury'
     elif bot in ['polarisaio']:
         bot = 'polaris'
     elif bot in ['prismaio']:
         bot = 'prism'
     elif bot in ['rushaio']:
         bot = 'rush'
-    elif bot in ['splashforce']:
-        bot = 'sf'
     elif bot in ['splashforce']:
         bot = 'sf'
     elif bot in ['soleaio']:
