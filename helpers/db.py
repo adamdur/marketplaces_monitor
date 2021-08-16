@@ -912,12 +912,12 @@ def get_sotm_bot_sales(db, bot, renewal, date):
     week_date = date - datetime.timedelta(days=7)
     cursor = db.cursor(dictionary=True)
     query = "SELECT AVG(price) average FROM sales " \
-            "WHERE bot LIKE %s " \
+            "WHERE bot = %s " \
             "AND price != 0 " \
             "AND renewal IN (" + ','.join(f"'{ren}'" for ren in renewal.split(',')) + ") " \
             "AND date = %s"
 
-    cursor.execute(query, (f"%{bot}%", date))
+    cursor.execute(query, (bot, date))
     current = cursor.fetchall()
 
     cursor.execute(query, (f"%{bot}%", prev_date))
@@ -963,7 +963,7 @@ def get_sotm_bot_sales(db, bot, renewal, date):
     db.close()
     return {
         'current': current[0]['average'] if current[0]['average'] else 0,
-        'prev': prev[0]['average'] if prev[0]['average'] else 0,
+        'prev': prev[0]['average'] if prev and prev[0]['average'] else 0,
         'prev_week': prev_week[0]['average'] if prev_week and prev_week[0]['average'] else 0,
     }
 

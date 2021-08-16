@@ -35,8 +35,12 @@ async def main(argv):
         week_price = sales['prev_week']
         if current_price == 0:
             current_price = prev_price
-        movement = round((current_price - prev_price) / prev_price * 100, 1)
-        movement_week = round((current_price - week_price) / week_price * 100, 1)
+        movement = 0
+        movement_week = 0
+        if prev_price:
+            movement = round((current_price - prev_price) / prev_price * 100, 1)
+        if week_price:
+            movement_week = round((current_price - week_price) / week_price * 100, 1)
 
         bot_name = f"{sotm_bot['bot'].capitalize()}{' (' + sotm_bot['display_renewal'] + ')' if sotm_bot['display_renewal'] else ''}" \
                    f"{' ' + sotm_bot['icon'] if sotm_bot['icon'] else ''}"
