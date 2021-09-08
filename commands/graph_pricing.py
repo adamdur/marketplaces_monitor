@@ -36,9 +36,9 @@ class Graph_pricing(BaseCommand):
         db = db_helper.mysql_get_mydb()
         data = db_helper.get_graph_data_pricing_slim(db, bot, renewal)
         sales_data = False
-        if message.guild.id in settings.MACHETE_SERVER:
-            db = db_helper.mysql_get_mydb()
-            sales_data = db_helper.get_graph_sales(db, bot)
+        # if message.guild.id in settings.MACHETE_SERVER:
+        db2 = db_helper.mysql_get_mydb()
+        sales_data = db_helper.get_graph_sales(db2, bot)
 
         if not await errors_helper.check_db_response(data, message.channel):
             return await waiting_message.delete()
